@@ -86,7 +86,46 @@ class WidgetHostManager(private val context: Context) {
             view.setAppWidget(widgetId, providerInfo)
         }
     }
+// ── Size reporting ───────────────────────────────────────────────────────────
+// Tells the widget exactly how big it is so it picks the right layout.
+// Call this every time the container size changes.
+// paddingDp — subtract padding from each side before reporting
 
+    fun updateWidgetSize(
+        widgetId: Int,
+        widthPx: Int,
+        heightPx: Int,
+        paddingDp: Int = 8
+    ) {
+        if (!WidgetSlotModel.isValidWidgetId(widgetId)) return
+        try {
+            val density = context.resources.displayMetrics.density
+            val paddingPx = (paddingDp * density).toInt()
+            val netW = (widthPx  - paddingPx * 2).coerceAtLeast(40)
+            val netH = (heightPx - paddingPx * 2).coerceAtLeast(40)
+
+            // Convert px to dp for the API
+            val netWDp = (netW / density).toInt()
+            val netHDp = (netH / density).toInt()
+
+            val options = android.os.Bundle().apply {
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,  netWDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,  netWDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, netHDp)
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, netHDp)
+            }
+            appWidgetManager.updateAppWidgetOptions(widgetId, options)
+        } catch (e: Exception) {
+            Log.e(TAG, "updateWidgetSize failed for $widgetId: ${e.message}")
+        }
+    }
+
+    // Reports size for all currently loaded slots at once
+    fun updateAllWidgetSizes(widthPx: Int, heightPx: Int) {
+        loadSlots().forEach { slot ->
+            updateWidgetSize(slot.widgetId, widthPx, heightPx)
+        }
+    }
     // ── Provider info ────────────────────────────────────────────────────────
     // AppWidgetProviderInfo describes a widget — its name, preview,
     // min size, which component handles it.
