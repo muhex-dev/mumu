@@ -605,8 +605,7 @@ internal fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFont
         item {
             SettingItem(Icons.Default.Palette, "Theming", "Drawer Colors", contentColor, expandedItem == "theme", onClick = { expandedItem = if (expandedItem == "theme") null else "theme" }) {
                 Column {
-                    ColorSection("Border Color", colorPalette, prefs.getInt("drawer_border_color", AndroidColor.WHITE)) { prefs.edit().putInt("drawer_border_color", it.toArgb()).apply() }
-                    ColorSection("Item Border", colorPalette, prefs.getInt("drawer_item_border_color", AndroidColor.WHITE)) { prefs.edit().putInt("drawer_item_border_color", it.toArgb()).apply() }
+                    // Border color settings removed
                 }
             }
         }

@@ -280,7 +280,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
         if (isAdded && _binding != null) {
             val drawerKeys = listOf(
                 "drawer_columns", "drawer_opacity", "drawer_item_opacity",
-                "drawer_border_color", "drawer_item_border_color", "drawer_display_mode",
+                "drawer_display_mode",
                 "drawer_icon_size", "drawer_label_size", "drawer_font_family"
             )
             val scrollerKeys = listOf(
@@ -349,13 +349,11 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
     private fun updateDrawerAppearance() {
         val opacityProgress = prefs.getInt("drawer_opacity", 100)
-        val borderColor = prefs.getInt("drawer_border_color", Color.WHITE)
         
         val background = binding.drawerCard.background?.mutate() as? GradientDrawable
         if (background != null) {
             val alpha = (opacityProgress * 2.55).toInt().coerceIn(0, 255)
             background.alpha = alpha
-            background.setStroke(resources.getDimensionPixelSize(R.dimen.drawer_border_width), borderColor)
         }
     }
 
