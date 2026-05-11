@@ -119,13 +119,11 @@ class AppGridAdapter(
             if (isFavoriteLayout) return
 
             val itemOpacity = prefs.getInt("drawer_item_opacity", 100)
-            val borderColor = prefs.getInt("drawer_item_border_color", Color.WHITE)
 
             val background = itemView.background?.mutate() as? GradientDrawable
             if (background != null) {
                 val alpha = (itemOpacity * 2.55).toInt().coerceIn(0, 255)
                 background.alpha = alpha
-                background.setStroke(2, borderColor)
             }
         }
     }
