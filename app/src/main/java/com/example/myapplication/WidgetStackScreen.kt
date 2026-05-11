@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import kotlin.math.atan2
+import kotlin.math.sqrt
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import android.util.Log
@@ -61,6 +63,8 @@ fun WidgetStackScreen(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
+    // Tilt sensor — drives the holo border
+    val (tiltX, tiltY) = rememberTiltState()
 
     var slots by remember(recomposeKey) {
         mutableStateOf(widgetHostManager.pruneOrphanedSlots())
@@ -134,7 +138,16 @@ fun WidgetStackScreen(
                     })
                 }
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp)           // breathing room so glow isn't clipped
+                .holoBorder(
+                    tiltX       = tiltX,
+                    tiltY       = tiltY,
+                    cornerRadius = 20.dp,
+                    strokeWidth  = 1.5.dp,
+                    baseAlpha   = 0.5f
+                ),
             update = { root ->
                 val widgetContainer = root.getChildAt(0) as android.widget.FrameLayout
                 val touchOverlay    = root.getChildAt(1)
