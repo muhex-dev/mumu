@@ -16,5 +16,6 @@
     <color name="adap">#1AFBFBFB</color>
 
     <color name="popup_inset">#0D000000</color>
+    <color name="top_section_bg">#00000000</color>
 
 </resources>

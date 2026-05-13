@@ -1,9 +1,5 @@
 package com.example.myapplication
 
-import kotlin.math.atan2
-import kotlin.math.sqrt
-import android.appwidget.AppWidgetManager
-import android.os.Bundle
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -13,7 +9,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,15 +26,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import kotlin.math.*
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 private val AccentColor  = Color(0xFF7C6DFF)
@@ -50,27 +45,23 @@ private val TextMuted    = Color(0x99FFFFFF)
 private val SurfaceColor = Color(0x22FFFFFF)
 private var isPagerAnimating = false
 
-private enum class EditMode { NONE, EDITING, POSITIONING }
+private enum class EditMode { NONE, EDITING }
 
 @Composable
 fun WidgetStackScreen(
     widgetHostManager: WidgetHostManager,
     onAddWidget: () -> Unit,
-    onTopDrag: ((Float) -> Unit)? = null,
-    onBottomDrag: ((Float) -> Unit)? = null,
-    onDragEnd: (() -> Unit)? = null,
+    onEnterPositioning: () -> Unit,
     recomposeKey: Int = 0
 ) {
     val context = LocalContext.current
-    val density = LocalDensity.current
-    // Tilt sensor — drives the holo border
-    val (tiltX, tiltY) = rememberTiltState()
 
     var slots by remember(recomposeKey) {
         mutableStateOf(widgetHostManager.pruneOrphanedSlots())
     }
     var currentIndex by remember(recomposeKey) { mutableIntStateOf(0) }
     var editMode     by remember { mutableStateOf(EditMode.NONE) }
+    var showIndicators by remember { mutableStateOf(false) }
 
     // Track rendered container size for size reporting
     var containerWidthPx  by remember { mutableIntStateOf(0) }
@@ -79,10 +70,6 @@ fun WidgetStackScreen(
     val dimAlpha by animateFloatAsState(
         targetValue = if (editMode != EditMode.NONE) 0.6f else 0f,
         animationSpec = tween(300), label = "dim"
-    )
-    val handleAlpha by animateFloatAsState(
-        targetValue = if (editMode == EditMode.POSITIONING) 1f else 0f,
-        animationSpec = tween(250), label = "handles"
     )
 
     LaunchedEffect(slots.size) {
@@ -140,14 +127,7 @@ fun WidgetStackScreen(
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(6.dp)           // breathing room so glow isn't clipped
-                .holoBorder(
-                    tiltX       = tiltX,
-                    tiltY       = tiltY,
-                    cornerRadius = 20.dp,
-                    strokeWidth  = 1.5.dp,
-                    baseAlpha   = 0.5f
-                ),
+                .padding(6.dp),           // breathing room so glow isn't clipped
             update = { root ->
                 val widgetContainer = root.getChildAt(0) as android.widget.FrameLayout
                 val touchOverlay    = root.getChildAt(1)
@@ -202,9 +182,9 @@ fun WidgetStackScreen(
                             )
 
                             // Report min size from provider info as baseline
-                            val density = context.resources.displayMetrics.density
-                            val minW = (info.minWidth  * density).toInt()
-                            val minH = (info.minHeight * density).toInt()
+                            val densityVal = context.resources.displayMetrics.density
+                            val minW = (info.minWidth  * densityVal).toInt()
+                            val minH = (info.minHeight * densityVal).toInt()
                             hostView.minimumWidth  = minW
                             hostView.minimumHeight = minH
 
@@ -258,9 +238,9 @@ fun WidgetStackScreen(
                             if (e1 == null || slots.size <= 1) return false
                             val dx = e1.x - e2.x
                             val dy = e1.y - e2.y
-                            if (Math.abs(dx) > Math.abs(dy) * 3
-                                && Math.abs(dx) > 150
-                                && Math.abs(velocityX) > 200
+                            if (abs(dx) > abs(dy) * 3
+                                && abs(dx) > 150
+                                && abs(velocityX) > 200
                             ) {
                                 val goNext = dx > 0
                                 val newIdx = if (goNext)
@@ -269,12 +249,14 @@ fun WidgetStackScreen(
                                 else currentIndex - 1
 
                                 if (!isPagerAnimating) {
+                                    showIndicators = true
                                     animatePagerTransition(
                                         root, widgetContainer,
                                         currentIndex, newIdx, goNext,
                                         slots, widgetHostManager, context
                                     ) {
                                         currentIndex = newIdx
+                                        showIndicators = false
                                         // Report size to newly shown widget
                                         widgetContainer.post {
                                             val newSlot = slots.getOrNull(newIdx)
@@ -305,9 +287,10 @@ fun WidgetStackScreen(
                                 widgetContainer.dispatchTouchEvent(event)
                         }
                         MotionEvent.ACTION_MOVE -> {
-                            if (Math.abs(event.x - startX) > 20
-                                || Math.abs(event.y - startY) > 20) {
+                            if (abs(event.x - startX) > 20
+                                || abs(event.y - startY) > 20) {
                                 isSwiping = true
+                                showIndicators = true
                                 val c = MotionEvent.obtain(event).apply {
                                     action = MotionEvent.ACTION_CANCEL
                                 }
@@ -316,12 +299,14 @@ fun WidgetStackScreen(
                             }
                         }
                         MotionEvent.ACTION_UP -> {
+                            if (!isPagerAnimating) showIndicators = false
                             if (!isSwiping && !longHandled
                                 && editMode == EditMode.NONE)
                                 widgetContainer.dispatchTouchEvent(event)
                             isSwiping = false; longHandled = false
                         }
                         MotionEvent.ACTION_CANCEL -> {
+                            if (!isPagerAnimating) showIndicators = false
                             isSwiping = false
                             widgetContainer.dispatchTouchEvent(event)
                         }
@@ -338,8 +323,10 @@ fun WidgetStackScreen(
                     .fillMaxSize()
                     .alpha(dimAlpha)
                     .background(OverlayColor)
-                    .noRippleClick {
-                        if (editMode == EditMode.POSITIONING) onDragEnd?.invoke()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         editMode = EditMode.NONE
                     }
             )
@@ -432,7 +419,12 @@ fun WidgetStackScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
                         .background(SurfaceColor)
-                        .noRippleClick { editMode = EditMode.POSITIONING }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            onEnterPositioning()
+                        }
                         .padding(horizontal = 24.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -472,105 +464,32 @@ fun WidgetStackScreen(
             )
         }
 
-        // ── Position mode — top handle ────────────────────────────────────────
-        if (handleAlpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .alpha(handleAlpha)
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures(
-                            onVerticalDrag = { _, dy -> onTopDrag?.invoke(dy) },
-                            onDragEnd      = { }
-                        )
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    Text(
-                        "↕  MOVE",
-                        color = HandleColor.copy(0.8f),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    )
-                    DragHandlePill()
-                }
-            }
-        }
-
-        // ── Position mode — bottom handle ─────────────────────────────────────
-        if (handleAlpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .alpha(handleAlpha)
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures(
-                            onVerticalDrag = { _, dy -> onBottomDrag?.invoke(dy) },
-                            onDragEnd      = { onDragEnd?.invoke() }
-                        )
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    DragHandlePill()
-                    Text(
-                        "↕  RESIZE",
-                        color = HandleColor.copy(0.8f),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    )
-                }
-            }
-        }
-
-        // ── Position mode — center hint ───────────────────────────────────────
-        AnimatedVisibility(
-            visible = editMode == EditMode.POSITIONING,
-            enter = fadeIn(tween(300)),
-            exit  = fadeOut(tween(200)),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 40.dp)
-        ) {
-            Text(
-                "Drag top handle to move\nDrag bottom handle to resize\nTap background to save & exit",
-                color = TextMuted,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
-        }
-
         // ── Page dots (normal mode only) ──────────────────────────────────────
-        if (slots.size > 1 && editMode == EditMode.NONE) {
+        AnimatedVisibility(
+            visible = slots.size > 1 && editMode == EditMode.NONE && showIndicators,
+            enter = fadeIn(),
+            exit = fadeOut(tween(800)),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp)
+        ) {
             Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 slots.forEachIndexed { index, _ ->
+                    val isActive = index == currentIndex
+                    val animatedWidth by animateDpAsState(
+                        targetValue = if (isActive) 18.dp else 7.dp,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+                        label = "dotWidth"
+                    )
                     Box(
                         Modifier
-                            .size(if (index == currentIndex) 7.dp else 5.dp)
-                            .clip(CircleShape)
+                            .size(width = animatedWidth, height = 7.dp)
+                            .clip(RoundedCornerShape(3.5.dp))
                             .background(
-                                if (index == currentIndex) Color.White
-                                else Color.White.copy(0.3f)
+                                Color.White.copy(alpha = if (isActive) 1.0f else 0.3f)
                             )
                     )
                 }
@@ -592,7 +511,6 @@ private fun reportSizeToHostView(
     context: android.content.Context
 ) {
     try {
-        val density = context.resources.displayMetrics.density
         val netW = (containerW - paddingH * 2).coerceAtLeast(40)
         val netH = (containerH - paddingV * 2).coerceAtLeast(40)
 
@@ -729,7 +647,11 @@ private fun EditActionButton(
                     ),
                     CircleShape
                 )
-                .noRippleClick(onClick),
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, null, tint = Color.White, modifier = Modifier.size(26.dp))
@@ -740,27 +662,6 @@ private fun EditActionButton(
             letterSpacing = 0.3.sp
         )
     }
-}
-
-// ── Drag handle pill ──────────────────────────────────────────────────────────
-
-@Composable
-private fun DragHandlePill() {
-    Box(
-        modifier = Modifier
-            .width(52.dp)
-            .height(5.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        AccentColor.copy(0.5f),
-                        HandleColor,
-                        AccentColor.copy(0.5f)
-                    )
-                )
-            )
-    )
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
@@ -809,10 +710,14 @@ private fun EmptyWidgetState(onAddWidget: () -> Unit) {
         Spacer(Modifier.height(28.dp))
         Box(
             modifier = Modifier
+                .padding(horizontal = 28.dp, vertical = 12.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(AccentColor)
-                .noRippleClick(onAddWidget)
-                .padding(horizontal = 28.dp, vertical = 12.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onAddWidget
+                )
         ) {
             Text(
                 "Add Widget", color = Color.White,
@@ -821,20 +726,4 @@ private fun EmptyWidgetState(onAddWidget: () -> Unit) {
             )
         }
     }
-}
-
-// ── No-ripple click ───────────────────────────────────────────────────────────
-
-@Composable
-private fun Modifier.noRippleClick(onClick: () -> Unit): Modifier {
-    val interactionSource = remember {
-        androidx.compose.foundation.interaction.MutableInteractionSource()
-    }
-    return this.then(
-        Modifier.clickable(
-            indication = null,
-            interactionSource = interactionSource,
-            onClick = onClick
-        )
-    )
 }

@@ -36,10 +36,14 @@ class TopPagesManager(
     private lateinit var gestureDetector: GestureDetector
     private var isAnimating = false
 
+    var onLongPress: (() -> Unit)? = null
+
     fun setupTopPages(layoutInflater: LayoutInflater) {
         // Direct View instantiations
         rotatingClock1 = RotatingClockView(context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            isClickable = false
+            isFocusable = false
         }
 
         // Layout-based instantiations
@@ -77,6 +81,10 @@ class TopPagesManager(
             }
 
             override fun onDown(e: MotionEvent): Boolean = true
+
+            override fun onLongPress(e: MotionEvent) {
+                onLongPress?.invoke()
+            }
         })
 
         binding.topContainer.setOnTouchListener { v, event ->
@@ -84,8 +92,7 @@ class TopPagesManager(
             if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
                 v.performClick()
             }
-            // We return true to consume the event if it's a horizontal swipe, 
-            // but for vertical swipes we want them to bubble up to HomeFragment for drawer/notifications.
+            // Return handled for the gesture detector (swipes/long press)
             handled
         }
     }
@@ -311,6 +318,8 @@ class TopPagesManager(
     private fun inflatePage(inflater: LayoutInflater, layoutId: Int): View {
         return inflater.inflate(layoutId, null).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            isClickable = false
+            isFocusable = false
         }
     }
 
@@ -421,11 +430,15 @@ class TopPagesManager(
 
         val showClock = prefs.getBoolean("clock_view_enabled", true)
         binding.topContainer.visibility = if (showClock) View.VISIBLE else View.GONE
-
-        val params = binding.topSectionGuideline.layoutParams
-                as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
-        params.guidePercent = if (showClock) 0.4f else 0.0f
-        binding.topSectionGuideline.layoutParams = params
+        
+        // Ensure parent wrapper is visible if clock is enabled
+        if (showClock) {
+            binding.topSectionWrapper.visibility = View.VISIBLE
+        } else {
+            // If clock view is disabled, hide the wrapper unless we're in positioning mode
+            // (but applyTopSectionVisibility is usually called for state changes)
+            binding.topSectionWrapper.visibility = View.GONE
+        }
     }
     // Called by TopSectionController when switching to Widget Mode
     fun hide() {

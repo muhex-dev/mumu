@@ -9,7 +9,81 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-     <!-- Separation Guideline at 40% -->
+    <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  topSectionWrapper                                           ║
+    ║                                                              ║
+    ║  Single parent for the entire top section.                   ║
+    ║  TopSectionController only ever changes:                     ║
+    ║    • layout_marginTop  → moves whole section up/down         ║
+    ║    • layout_height     → resizes whole section               ║
+    ╚══════════════════════════════════════════════════════════════╝
+    -->
+    <FrameLayout
+        android:id="@+id/topSectionWrapper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/topSectionGuideline">
+
+        <!-- TopView: Container for Clock and Widgets -->
+        <FrameLayout
+            android:id="@+id/topView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_top_section_mask"
+            android:clipToOutline="true"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Clock Mode — fills topView -->
+            <FrameLayout
+                android:id="@+id/topContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="visible" />
+
+            <!-- Widget Mode — fills topView -->
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/widgetStackCompose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+
+
+        <!-- Dim overlay — fills wrapper, elevation 1 -->
+        <View
+            android:id="@+id/topDimOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_top_dim"
+            android:alpha="0"
+            android:elevation="1dp"
+            android:importantForAccessibility="no"
+            android:clickable="false"
+            android:focusable="false" />
+
+        <!-- Page indicators — bottom center inside wrapper -->
+        <LinearLayout
+            android:id="@+id/pageIndicatorContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:elevation="2dp" />
+
+    </FrameLayout>
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/topSectionGuideline"
         android:layout_width="wrap_content"
@@ -17,63 +91,14 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.4" />
 
-    <!-- Top Section: Clocks and Info Pages (Clock Mode) -->
-    <FrameLayout
-        android:id="@+id/topContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/bg_top_section_mask"
-        android:clipToOutline="true"
-        android:visibility="visible"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/topSectionGuideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Top Section: Real Widget Stack (Widget Mode) -->
-    <!-- Hidden by default — TopSectionController switches between this and topContainer -->
+    <!-- Position & Size overlay — Full Screen, highest elevation -->
     <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/widgetStackCompose"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="0dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/topSectionGuideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:id="@+id/positionOverlayCompose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="50dp"
+        android:visibility="gone" />
 
-    <!-- Dim Overlay for top section transitions (On top of clocks) -->
-    <View
-        android:id="@+id/topDimOverlay"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="0dp"
-        android:background="@drawable/bg_top_dim"
-        android:alpha="0"
-        android:elevation="1dp"
-        android:importantForAccessibility="no"
-        android:clickable="false"
-        android:focusable="false"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/topSectionGuideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Page Indicator Circles -->
-    <LinearLayout
-        android:id="@+id/pageIndicatorContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:elevation="2dp"
-        app:layout_constraintBottom_toTopOf="@id/topSectionGuideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Settings/Default Launcher Button (Top Left) -->
     <ImageButton
         android:id="@+id/btnSetDefaultLauncher"
         android:layout_width="48dp"
@@ -89,7 +114,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Main Content Section (Bottom 60%) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottomContent"
         android:layout_width="0dp"
@@ -101,7 +125,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Samsung-style PinnedApps (Full Overlay in Bottom Section) -->
         <androidx.compose.ui.platform.ComposeView
             android:id="@+id/pinnedAppsCompose"
             android:layout_width="0dp"
@@ -113,7 +136,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Fixed Dock Bar (Bottom) -->
         <androidx.compose.ui.platform.ComposeView
             android:id="@+id/dockCompose"
             android:layout_width="0dp"
@@ -125,7 +147,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Global Overlay (Compose): Popup, Settings, Menus -->
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/homePopupCompose"
         android:layout_width="match_parent"
