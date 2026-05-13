@@ -5,7 +5,10 @@ import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.graphics.Outline
 import android.util.Log
+import android.view.View
+import android.view.ViewOutlineProvider
 
 /**
  * WidgetHostManager — the engine that talks to Android's AppWidget system.
@@ -84,6 +87,16 @@ class WidgetHostManager(private val context: Context) {
             providerInfo
         ).also { view ->
             view.setAppWidget(widgetId, providerInfo)
+            
+            // Apply rounded corners to the widget host view
+            val density = context.resources.displayMetrics.density
+            val radius = 28 * density
+            view.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(v: View, outline: Outline) {
+                    outline.setRoundRect(0, 0, v.width, v.height, radius)
+                }
+            }
+            view.clipToOutline = true
         }
     }
 // ── Size reporting ───────────────────────────────────────────────────────────
@@ -95,7 +108,7 @@ class WidgetHostManager(private val context: Context) {
         widgetId: Int,
         widthPx: Int,
         heightPx: Int,
-        paddingDp: Int = 8
+        paddingDp: Int = 0
     ) {
         if (!WidgetSlotModel.isValidWidgetId(widgetId)) return
         try {
@@ -121,9 +134,9 @@ class WidgetHostManager(private val context: Context) {
     }
 
     // Reports size for all currently loaded slots at once
-    fun updateAllWidgetSizes(widthPx: Int, heightPx: Int) {
+    fun updateAllWidgetSizes(widthPx: Int, heightPx: Int, paddingDp: Int = 0) {
         loadSlots().forEach { slot ->
-            updateWidgetSize(slot.widgetId, widthPx, heightPx)
+            updateWidgetSize(slot.widgetId, widthPx, heightPx, paddingDp)
         }
     }
     // ── Provider info ────────────────────────────────────────────────────────

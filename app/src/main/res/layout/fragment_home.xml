@@ -36,6 +36,8 @@
             android:id="@+id/topView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/bg_top_section_mask"
+            android:clipToOutline="true"
             android:clipChildren="false"
             android:clipToPadding="false">
 
@@ -44,8 +46,6 @@
                 android:id="@+id/topContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/bg_top_section_mask"
-                android:clipToOutline="true"
                 android:visibility="visible" />
 
             <!-- Widget Mode — fills topView -->
