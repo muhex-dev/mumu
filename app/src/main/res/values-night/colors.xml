@@ -14,7 +14,7 @@
     <color name="adap">#3B000000</color>
 
     <color name="popup_inset">#2C2C2E</color> <!-- Inset/Section color -->
-    <color name="top_section_bg">#33FFFFFF</color>
+    <color name="top_section_bg">#00000000</color>
     <color name="colorAccent">#FF5722</color>
 
 </resources>

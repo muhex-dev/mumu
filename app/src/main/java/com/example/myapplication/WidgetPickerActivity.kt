@@ -9,11 +9,19 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 class WidgetPickerActivity : AppCompatActivity() {
 
     private lateinit var widgetHostManager: WidgetHostManager
     private var pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var pendingProvider: ComponentName? = null
+
+    private var allProviders by mutableStateOf<List<AppWidgetProviderInfo>>(emptyList())
+    private var isShowingPicker by mutableStateOf(true)
 
     companion object {
         private const val TAG = "WidgetPickerActivity"
@@ -32,8 +40,40 @@ class WidgetPickerActivity : AppCompatActivity() {
 
         pendingProvider = savedInstanceState?.getParcelable(KEY_PENDING_PROVIDER)
 
-        if (pendingWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            launchPickStep()
+        allProviders = widgetHostManager.getAllProviders()
+
+        setContent {
+            if (isShowingPicker) {
+                WidgetPickerScreen(
+                    providers = allProviders,
+                    onWidgetSelected = { info ->
+                        selectWidget(info)
+                    },
+                    onDismiss = {
+                        cancelAndFinish()
+                    }
+                )
+            }
+        }
+    }
+
+    private fun selectWidget(info: AppWidgetProviderInfo) {
+        isShowingPicker = false
+        pendingWidgetId = widgetHostManager.allocateWidgetId()
+        pendingProvider = info.provider
+
+        Log.d(TAG, "Selecting widget: ${info.provider.flattenToShortString()} | ID: $pendingWidgetId")
+
+        val manager = AppWidgetManager.getInstance(this)
+        // Check if we already have "Always allow" permission
+        val success = manager.bindAppWidgetIdIfAllowed(pendingWidgetId, info.provider)
+        
+        if (success) {
+            Log.d(TAG, "Permission already granted, skipping dialog.")
+            launchConfigureStep(pendingWidgetId, info)
+        } else {
+            Log.d(TAG, "Permission needed, showing system bind dialog.")
+            launchBindStep(pendingWidgetId, info.provider)
         }
     }
 
@@ -74,6 +114,8 @@ class WidgetPickerActivity : AppCompatActivity() {
             val bindIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider)
+                // Passing an empty options bundle can help on some Android versions
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_OPTIONS, Bundle())
             }
             startActivityForResult(bindIntent, WidgetHostManager.REQUEST_BIND)
         } catch (e: Exception) {
