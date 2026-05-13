@@ -30,7 +30,8 @@ fun Modifier.holoBorder(
     cornerRadius: Dp = 32.dp,
     strokeWidth: Dp = 1.5.dp,
     baseAlpha: Float = 0.35f,
-    durationMillis: Int = 6000
+    durationMillis: Int = 6000,
+    color: Color = Color.White
 ): Modifier = this.composed {
     
     val infiniteTransition = rememberInfiniteTransition(label = "HoloBorderRotation")
@@ -52,11 +53,11 @@ fun Modifier.holoBorder(
         val halfStroke = strokePx / 2f
 
         // ── Color Definitions ────────────────────────────────────────────────
-        val white = Color.White.copy(alpha = baseAlpha).toArgb()
+        val highlight = color.copy(alpha = baseAlpha).toArgb()
         val trans = Color.Transparent.toArgb()
 
         // Quadrants setup: Smoothly interpolating between white and transparent segments
-        val colors = intArrayOf(trans, white, trans, white, trans)
+        val colors = intArrayOf(trans, highlight, trans, highlight, trans)
         val stops = floatArrayOf(0.0f, 0.25f, 0.5f, 0.75f, 1.0f)
 
         // ── Shader Logic ─────────────────────────────────────────────────────

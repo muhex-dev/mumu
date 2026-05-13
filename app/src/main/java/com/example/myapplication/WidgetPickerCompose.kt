@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -63,6 +64,13 @@ fun WidgetPickerScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     
+    val isDark = isSystemInDarkTheme()
+    val bgColor = if (isDark) Color(0xFF050505) else Color(0xFFF8F9FA)
+    val textColor = if (isDark) Color.White else Color.Black
+    val subTextColor = if (isDark) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f)
+    val accentColor = Color(0xFF30C1F4)
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
+
     var searchQuery by remember { mutableStateOf("") }
     var expandedAppLabel by remember { mutableStateOf<String?>(null) }
 
@@ -98,7 +106,7 @@ fun WidgetPickerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF050505))
+            .background(bgColor)
     ) {
         // High-end background glows
         val infiniteTransition = rememberInfiniteTransition(label = "BackgroundGlow")
@@ -122,14 +130,14 @@ fun WidgetPickerScreen(
                     .size(500.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = 150.dp + glowOffset.dp, y = (-150).dp)
-                    .background(Color(0xFF30C1F4).copy(alpha = 0.08f), CircleShape)
+                    .background(accentColor.copy(alpha = if (isDark) 0.08f else 0.12f), CircleShape)
             )
             Box(
                 modifier = Modifier
                     .size(450.dp)
                     .align(Alignment.BottomStart)
                     .offset(x = (-150).dp - glowOffset.dp, y = 200.dp)
-                    .background(Color(0xFF7C6DFF).copy(alpha = 0.08f), CircleShape)
+                    .background(Color(0xFF7C6DFF).copy(alpha = if (isDark) 0.08f else 0.12f), CircleShape)
             )
         }
 
@@ -151,14 +159,14 @@ fun WidgetPickerScreen(
                         "Add Widget",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
+                            color = textColor,
                             letterSpacing = (-1).sp
                         )
                     )
                     Text(
                         "Select an app to browse widgets",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White.copy(alpha = 0.5f)
+                            color = subTextColor
                         )
                     )
                 }
@@ -169,10 +177,10 @@ fun WidgetPickerScreen(
                         onDismiss() 
                     },
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.05f), CircleShape)
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
+                        .background(textColor.copy(alpha = 0.05f), CircleShape)
+                        .border(1.dp, borderColor, CircleShape)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = textColor)
                 }
             }
 
@@ -181,22 +189,27 @@ fun WidgetPickerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .holoBorder(cornerRadius = 16.dp, durationMillis = 10000, baseAlpha = 0.2f)
+                    .holoBorder(
+                        cornerRadius = 16.dp, 
+                        durationMillis = 10000, 
+                        baseAlpha = if (isDark) 0.2f else 0.15f,
+                        color = textColor
+                    )
             ) {
                 TextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search apps or widgets...", color = Color.White.copy(alpha = 0.3f)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.4f)) },
+                    placeholder = { Text("Search apps or widgets...", color = subTextColor.copy(alpha = 0.3f)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = subTextColor.copy(alpha = 0.4f)) },
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                        disabledContainerColor = Color.White.copy(alpha = 0.03f),
+                        focusedContainerColor = textColor.copy(alpha = 0.03f),
+                        unfocusedContainerColor = textColor.copy(alpha = 0.03f),
+                        disabledContainerColor = textColor.copy(alpha = 0.03f),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor
                     ),
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true
@@ -219,6 +232,9 @@ fun WidgetPickerScreen(
                             modifier = Modifier.animateItem(),
                             group = group,
                             isExpanded = isExpanded,
+                            isDark = isDark,
+                            textColor = textColor,
+                            accentColor = accentColor,
                             onToggle = {
                                 expandedAppLabel = if (isExpanded) null else group.appLabel
                                 if (!isExpanded) {
@@ -241,7 +257,7 @@ fun WidgetPickerScreen(
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .background(
-                                        Color.White.copy(alpha = 0.02f),
+                                        textColor.copy(alpha = 0.02f),
                                         RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
                                     )
                                     .padding(bottom = 12.dp)
@@ -249,6 +265,9 @@ fun WidgetPickerScreen(
                                 group.widgets.forEach { widget ->
                                     WidgetPickerItemRow(
                                         widget = widget,
+                                        isDark = isDark,
+                                        textColor = textColor,
+                                        accentColor = accentColor,
                                         onWidgetSelected = onWidgetSelected
                                     )
                                 }
@@ -266,6 +285,9 @@ fun AppAccordionHeader(
     modifier: Modifier = Modifier,
     group: WidgetAppGroup,
     isExpanded: Boolean,
+    isDark: Boolean,
+    textColor: Color,
+    accentColor: Color,
     onToggle: () -> Unit
 ) {
     val haptics = LocalHapticFeedback.current
@@ -277,7 +299,11 @@ fun AppAccordionHeader(
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (isExpanded) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.04f),
+        targetValue = if (isExpanded) {
+            textColor.copy(alpha = if (isDark) 0.08f else 0.06f)
+        } else {
+            textColor.copy(alpha = if (isDark) 0.04f else 0.03f)
+        },
         label = "BgColor"
     )
 
@@ -317,14 +343,14 @@ fun AppAccordionHeader(
                     text = group.appLabel,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (isExpanded) Color(0xFF30C1F4) else Color.White,
+                        color = if (isExpanded) accentColor else textColor,
                         letterSpacing = 0.5.sp
                     )
                 )
                 Text(
                     text = "${group.widgets.size} widget${if (group.widgets.size > 1) "s" else ""}",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White.copy(alpha = 0.4f)
+                        color = textColor.copy(alpha = 0.4f)
                     )
                 )
             }
@@ -332,7 +358,7 @@ fun AppAccordionHeader(
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
-                tint = if (isExpanded) Color(0xFF30C1F4) else Color.White.copy(alpha = 0.3f),
+                tint = if (isExpanded) accentColor else textColor.copy(alpha = 0.3f),
                 modifier = Modifier
                     .size(24.dp)
                     .rotate(rotation)
@@ -344,6 +370,9 @@ fun AppAccordionHeader(
 @Composable
 fun WidgetPickerItemRow(
     widget: WidgetProviderItem,
+    isDark: Boolean,
+    textColor: Color,
+    accentColor: Color,
     onWidgetSelected: (AppWidgetProviderInfo) -> Unit
 ) {
     val haptics = LocalHapticFeedback.current
@@ -372,16 +401,19 @@ fun WidgetPickerItemRow(
                     .size(52.dp)
                     .background(
                         Brush.linearGradient(
-                            listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.02f))
+                            listOf(
+                                textColor.copy(alpha = if (isDark) 0.08f else 0.05f),
+                                textColor.copy(alpha = if (isDark) 0.02f else 0.01f)
+                            )
                         ),
                         RoundedCornerShape(10.dp)
                     )
-                    .border(0.5.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                    .border(0.5.dp, textColor.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = widget.label.take(1).uppercase(),
-                    color = Color.White.copy(alpha = 0.4f),
+                    color = textColor.copy(alpha = 0.4f),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -393,14 +425,14 @@ fun WidgetPickerItemRow(
                 Text(
                     text = widget.label,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White,
+                        color = textColor,
                         fontWeight = FontWeight.Medium
                     )
                 )
                 Text(
                     text = "${widget.info.minWidth} x ${widget.info.minHeight}",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color(0xFF30C1F4).copy(alpha = 0.6f),
+                        color = accentColor.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold
                     )
                 )
