@@ -3,96 +3,106 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="32dp">
-
-    <TextView
-        android:id="@+id/quoteHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-black"
-        android:text="STAY\nFOCUSED"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        android:letterSpacing="0.05"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:padding="24dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <LinearLayout
-        android:id="@+id/mainText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:gravity="center"
         android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/quoteHeader">
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif"
-            android:text="— Hey, today's"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
-
-        <TextClock
+            android:id="@+id/quoteHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-black"
-            android:format12Hour="EEEE 'OF' —"
-            android:format24Hour="EEEE 'OF' —"
-            android:textAllCaps="true"
-            android:textColor="@android:color/white"
-            android:textSize="32sp"
-            android:includeFontPadding="false" />
-
-        <TextClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif"
-            android:format12Hour="MMMM, dd"
-            android:format24Hour="MMMM, dd"
-            android:textAllCaps="true"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:alpha="0.7"
-            android:letterSpacing="0.1" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/mainText">
-
-        <ImageView
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:src="@android:drawable/ic_menu_recent_history"
-            app:tint="#FF5722" />
-
-        <TextClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif-black"
-            android:format12Hour="hh:mm a"
-            android:format24Hour="HH:mm"
-            android:textColor="@android:color/white"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/batteryText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:fontFamily="sans-serif"
-            android:text="--%"
+            android:gravity="center"
+            android:text="STAY FOCUSED"
             android:textColor="@android:color/white"
             android:textSize="12sp"
-            android:alpha="0.5" />
+            android:alpha="0.6"
+            android:letterSpacing="0.1" />
+
+        <LinearLayout
+            android:id="@+id/mainText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="— Hey, today's —"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:alpha="0.8" />
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:format12Hour="EEEE"
+                android:format24Hour="EEEE"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:textSize="36sp"
+                android:includeFontPadding="false" />
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:format12Hour="MMMM dd"
+                android:format24Hour="MMMM dd"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:alpha="0.6"
+                android:letterSpacing="0.05" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:format12Hour="hh:mm a"
+                android:format24Hour="HH:mm"
+                android:textColor="@android:color/white"
+                android:textSize="13sp" />
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginHorizontal="8dp"
+                android:background="@android:color/white"
+                android:alpha="0.3" />
+
+            <TextView
+                android:id="@+id/batteryText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="--%"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:alpha="0.6" />
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

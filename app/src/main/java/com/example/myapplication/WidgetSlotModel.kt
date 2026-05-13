@@ -113,20 +113,5 @@ data class WidgetSlotModel(
         fun loadBottomPercent(context: android.content.Context): Float =
             context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
                 .getFloat(KEY_BOTTOM_PERCENT, 0.4f)
-        // ── Container height (guideline percent) ───────────────────────────────
-        private const val KEY_CONTAINER_PERCENT = "widget_container_percent"
-
-        fun saveContainerPercent(context: android.content.Context, percent: Float) {
-            context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                .edit()
-                .putFloat(KEY_CONTAINER_PERCENT, percent)
-                .apply()
-        }
-
-        fun loadContainerPercent(context: android.content.Context): Float {
-            return context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                .getFloat(KEY_CONTAINER_PERCENT, 0.4f)  // default 40%
-        }
     }
-
 }
