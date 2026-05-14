@@ -74,8 +74,15 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
             ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
             if (WidgetSlotModel.isValidWidgetId(widgetId)) {
-                widgetHostManager.addSlot(widgetId)
-                topSectionController.refreshWidgetStack()
+                val newIndex = widgetHostManager.addSlot(widgetId)
+                
+                // Switch to widget mode so the user sees it immediately
+                if (!topSectionController.isWidgetMode()) {
+                    topSectionController.switchToWidgetMode(animate = true)
+                }
+                
+                // Refresh the stack and scroll to the newly added widget
+                topSectionController.refreshWidgetStack(targetIndex = newIndex)
             }
         }
     }
@@ -95,9 +102,11 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
                 WidgetPickerActivity.EXTRA_WIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID
             )
+            val explicitIndex = intent.getIntExtra("extra_widget_index", -1)
+            
             if (WidgetSlotModel.isValidWidgetId(widgetId)) {
-                val newSlots = widgetHostManager.addSlot(widgetId)
-                val newIndex = newSlots.size - 1
+                // If the receiver didn't provide an index (internal picker), we add it now
+                val newIndex = if (explicitIndex != -1) explicitIndex else widgetHostManager.addSlot(widgetId)
                 
                 // Switch to widget mode so the user sees it immediately
                 if (!topSectionController.isWidgetMode()) {

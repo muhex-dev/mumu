@@ -22,7 +22,8 @@ class WidgetPickerActivity : AppCompatActivity() {
 
     private var allProviders by mutableStateOf<List<AppWidgetProviderInfo>>(emptyList())
     private var isShowingPicker by mutableStateOf(true)
-    private var lastAddedProvider by mutableStateOf<ComponentName?>(null)
+    private var addedProviders by mutableStateOf<Set<ComponentName>>(emptySet())
+    private var successCount by mutableStateOf(0)
 
     companion object {
         private const val TAG = "WidgetPickerActivity"
@@ -42,12 +43,14 @@ class WidgetPickerActivity : AppCompatActivity() {
         pendingProvider = savedInstanceState?.getParcelable(KEY_PENDING_PROVIDER)
 
         allProviders = widgetHostManager.getAllProviders()
+        refreshAddedProviders()
 
         setContent {
             if (isShowingPicker) {
                 WidgetPickerScreen(
                     providers = allProviders,
-                    lastAddedProvider = lastAddedProvider,
+                    addedProviders = addedProviders,
+                    successCount = successCount,
                     onWidgetSelected = { info ->
                         selectWidget(info)
                     },
@@ -57,6 +60,13 @@ class WidgetPickerActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    private fun refreshAddedProviders() {
+        val slots = widgetHostManager.loadSlots()
+        addedProviders = slots.mapNotNull { 
+            widgetHostManager.getProviderInfo(it.widgetId)?.provider 
+        }.toSet()
     }
 
     private fun selectWidget(info: AppWidgetProviderInfo) {
@@ -243,9 +253,10 @@ class WidgetPickerActivity : AppCompatActivity() {
         
         // Reset pending state so it doesn't get deleted on close
         if (pendingWidgetId == widgetId) {
-            lastAddedProvider = pendingProvider
+            successCount++
             pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
             pendingProvider = null
+            refreshAddedProviders()
         }
 
         // Notify HomeFragment immediately

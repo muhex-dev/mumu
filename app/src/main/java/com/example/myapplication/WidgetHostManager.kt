@@ -169,8 +169,11 @@ class WidgetHostManager(private val context: Context) {
         WidgetSlotModel.saveSlots(context, slots)
     }
 
-    fun addSlot(widgetId: Int): List<WidgetSlotModel> {
+    fun addSlot(widgetId: Int): Int {
         val current = loadSlots().toMutableList()
+        val existingIndex = current.indexOfFirst { it.widgetId == widgetId }
+        if (existingIndex != -1) return existingIndex
+
         val newSlot = WidgetSlotModel(
             widgetId = widgetId,
             heightDp = 180,
@@ -178,7 +181,7 @@ class WidgetHostManager(private val context: Context) {
         )
         current.add(newSlot)
         saveSlots(current)
-        return current
+        return current.size - 1 // Return the index of the added slot
     }
 
     fun removeSlot(widgetId: Int): List<WidgetSlotModel> {

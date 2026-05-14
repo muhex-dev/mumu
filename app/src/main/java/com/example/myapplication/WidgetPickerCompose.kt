@@ -38,7 +38,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
- import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,7 +99,8 @@ data class WidgetPickerTheme(
 @Composable
 fun WidgetPickerScreen(
     providers: List<AppWidgetProviderInfo>,
-    lastAddedProvider: ComponentName? = null,
+    addedProviders: Set<ComponentName> = emptySet(),
+    successCount: Int = 0,
     onWidgetSelected: (AppWidgetProviderInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -114,6 +115,15 @@ fun WidgetPickerScreen(
     var expandedAppLabel by remember { mutableStateOf<String?>(null) }
     
     var selectedWidgetForConfirmation by remember { mutableStateOf<WidgetProviderItem?>(null) }
+    var showSuccessAnimation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(successCount) {
+        if (successCount > 0) {
+            showSuccessAnimation = true
+            delay(2000)
+            showSuccessAnimation = false
+        }
+    }
 
     val groupedWidgets = remember(providers, searchQuery) {
         val pm = context.packageManager
@@ -208,7 +218,7 @@ fun WidgetPickerScreen(
                                     WidgetPickerItemRow(
                                         widget = widget,
                                         theme = theme,
-                                        isSuccess = lastAddedProvider == widget.info.provider,
+                                        isSuccess = addedProviders.contains(widget.info.provider),
                                         onWidgetSelected = { selectedWidgetForConfirmation = it }
                                     )
                                 }
@@ -233,10 +243,39 @@ fun WidgetPickerScreen(
                 }
             )
         }
+
+        // Success Overlay
+        AnimatedVisibility(
+            visible = showSuccessAnimation,
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 1.2f),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            SuccessIndicator(theme)
+        }
     }
 }
 
 // ── SUB-COMPONENTS ───────────────────────────────────────────────────────────
+
+@Composable
+private fun SuccessIndicator(theme: WidgetPickerTheme) {
+    Card(
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(containerColor = theme.accent),
+        modifier = Modifier.size(100.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.Black,
+                modifier = Modifier.size(60.dp)
+            )
+        }
+    }
+}
 
 @Composable
 private fun WidgetPickerHeader(
