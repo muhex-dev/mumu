@@ -96,8 +96,16 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
                 AppWidgetManager.INVALID_APPWIDGET_ID
             )
             if (WidgetSlotModel.isValidWidgetId(widgetId)) {
-                widgetHostManager.addSlot(widgetId)
-                topSectionController.refreshWidgetStack()
+                val newSlots = widgetHostManager.addSlot(widgetId)
+                val newIndex = newSlots.size - 1
+                
+                // Switch to widget mode so the user sees it immediately
+                if (!topSectionController.isWidgetMode()) {
+                    topSectionController.switchToWidgetMode(animate = true)
+                }
+                
+                // Refresh the stack and scroll to the newly added widget
+                topSectionController.refreshWidgetStack(targetIndex = newIndex)
             }
         }
     }

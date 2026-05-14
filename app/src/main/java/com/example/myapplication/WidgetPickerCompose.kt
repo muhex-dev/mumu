@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.appwidget.AppWidgetProviderInfo
+import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
@@ -97,6 +99,7 @@ data class WidgetPickerTheme(
 @Composable
 fun WidgetPickerScreen(
     providers: List<AppWidgetProviderInfo>,
+    lastAddedProvider: ComponentName? = null,
     onWidgetSelected: (AppWidgetProviderInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -205,6 +208,7 @@ fun WidgetPickerScreen(
                                     WidgetPickerItemRow(
                                         widget = widget,
                                         theme = theme,
+                                        isSuccess = lastAddedProvider == widget.info.provider,
                                         onWidgetSelected = { selectedWidgetForConfirmation = it }
                                     )
                                 }
@@ -377,6 +381,7 @@ private fun AppAccordionHeader(
 private fun WidgetPickerItemRow(
     widget: WidgetProviderItem,
     theme: WidgetPickerTheme,
+    isSuccess: Boolean = false,
     onWidgetSelected: (WidgetProviderItem) -> Unit
 ) {
     val context = LocalContext.current
@@ -393,13 +398,20 @@ private fun WidgetPickerItemRow(
         }
     }
     
+    val borderColor by animateColorAsState(
+        if (isSuccess) theme.accent else theme.text.copy(alpha = 0.06f),
+        label = "BorderColor"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 5.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = theme.text.copy(alpha = 0.04f)),
-        border = BorderStroke(1.dp, theme.text.copy(alpha = 0.06f)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSuccess) theme.accent.copy(alpha = 0.05f) else theme.text.copy(alpha = 0.04f)
+        ),
+        border = BorderStroke(if (isSuccess) 2.dp else 1.dp, borderColor),
         onClick = {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             onWidgetSelected(widget)
@@ -443,16 +455,28 @@ private fun WidgetPickerItemRow(
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = widget.label,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = theme.text,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.2.sp
-                    ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = widget.label,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = theme.text,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.2.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    if (isSuccess) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Added",
+                            tint = theme.accent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 

@@ -22,6 +22,7 @@ class WidgetPickerActivity : AppCompatActivity() {
 
     private var allProviders by mutableStateOf<List<AppWidgetProviderInfo>>(emptyList())
     private var isShowingPicker by mutableStateOf(true)
+    private var lastAddedProvider by mutableStateOf<ComponentName?>(null)
 
     companion object {
         private const val TAG = "WidgetPickerActivity"
@@ -46,6 +47,7 @@ class WidgetPickerActivity : AppCompatActivity() {
             if (isShowingPicker) {
                 WidgetPickerScreen(
                     providers = allProviders,
+                    lastAddedProvider = lastAddedProvider,
                     onWidgetSelected = { info ->
                         selectWidget(info)
                     },
@@ -241,12 +243,14 @@ class WidgetPickerActivity : AppCompatActivity() {
         
         // Reset pending state so it doesn't get deleted on close
         if (pendingWidgetId == widgetId) {
+            lastAddedProvider = pendingProvider
             pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
             pendingProvider = null
         }
 
         // Notify HomeFragment immediately
         val broadcastIntent = Intent("com.example.myapplication.WIDGET_ADDED").apply {
+            setPackage(packageName)
             putExtra(EXTRA_WIDGET_ID, widgetId)
         }
         sendBroadcast(broadcastIntent)

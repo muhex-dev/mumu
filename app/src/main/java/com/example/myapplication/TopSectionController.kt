@@ -31,6 +31,7 @@ class TopSectionController(
 ) {
     var onAddWidgetRequested: (() -> Unit)? = null
     private var recomposeKey = 0
+    private var initialWidgetIndex = 0
 
     // Widget size tracking
     private var containerWidthPx  = 0
@@ -128,21 +129,26 @@ class TopSectionController(
 
     fun renderWidgetStack() {
         val key = recomposeKey
+        val targetIdx = initialWidgetIndex
         binding.widgetStackCompose.setContent {
             WidgetStackScreen(
                 widgetHostManager  = widgetHostManager,
                 onAddWidget        = { onAddWidgetRequested?.invoke() },
                 onEnterPositioning = { enterPositioning() },
-                recomposeKey       = key
+                recomposeKey       = key,
+                initialIndex       = targetIdx
             )
         }
+        // Reset after one-time use
+        initialWidgetIndex = 0
     }
 
-    fun refreshWidgetStack() {
-        if (isWidgetMode()) {
-            recomposeKey++
-            renderWidgetStack()
+    fun refreshWidgetStack(targetIndex: Int = -1) {
+        if (targetIndex >= 0) {
+            initialWidgetIndex = targetIndex
         }
+        recomposeKey++
+        renderWidgetStack()
     }
 
     // ── Positioning ───────────────────────────────────────────────────────────
