@@ -36,9 +36,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -107,6 +109,8 @@ fun WidgetPickerScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var expandedAppLabel by remember { mutableStateOf<String?>(null) }
+    
+    var selectedWidgetForConfirmation by remember { mutableStateOf<WidgetProviderItem?>(null) }
 
     val groupedWidgets = remember(providers, searchQuery) {
         val pm = context.packageManager
@@ -201,7 +205,7 @@ fun WidgetPickerScreen(
                                     WidgetPickerItemRow(
                                         widget = widget,
                                         theme = theme,
-                                        onWidgetSelected = onWidgetSelected
+                                        onWidgetSelected = { selectedWidgetForConfirmation = it }
                                     )
                                 }
                             }
@@ -209,6 +213,21 @@ fun WidgetPickerScreen(
                     }
                 }
             }
+        }
+
+        // Confirmation Dialog
+        selectedWidgetForConfirmation?.let { widgetItem ->
+            WidgetConfirmationDialog(
+                widget = widgetItem,
+                theme = theme,
+                onConfirm = {
+                    onWidgetSelected(widgetItem.info)
+                    selectedWidgetForConfirmation = null
+                },
+                onDismiss = {
+                    selectedWidgetForConfirmation = null
+                }
+            )
         }
     }
 }
@@ -358,7 +377,7 @@ private fun AppAccordionHeader(
 private fun WidgetPickerItemRow(
     widget: WidgetProviderItem,
     theme: WidgetPickerTheme,
-    onWidgetSelected: (AppWidgetProviderInfo) -> Unit
+    onWidgetSelected: (WidgetProviderItem) -> Unit
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
@@ -383,7 +402,7 @@ private fun WidgetPickerItemRow(
         border = BorderStroke(1.dp, theme.text.copy(alpha = 0.06f)),
         onClick = {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            onWidgetSelected(widget.info)
+            onWidgetSelected(widget)
         }
     ) {
         Row(
@@ -449,6 +468,110 @@ private fun WidgetPickerItemRow(
                             fontWeight = FontWeight.Black
                         )
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetConfirmationDialog(
+    widget: WidgetProviderItem,
+    theme: WidgetPickerTheme,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val previewBitmap by produceState<ImageBitmap?>(initialValue = null, widget.info) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                (widget.info.loadPreviewImage(context, 0) ?: widget.info.loadIcon(context, 0))
+                    ?.toBitmap()?.asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = theme.background),
+            border = BorderStroke(1.dp, theme.border)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Add Widget?",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = theme.text
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = widget.label,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = theme.subText),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .background(theme.text.copy(0.05f), RoundedCornerShape(20.dp))
+                        .border(1.dp, theme.text.copy(0.1f), RoundedCornerShape(20.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (previewBitmap != null) {
+                        Image(
+                            bitmap = previewBitmap!!,
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.padding(12.dp).fillMaxSize().clip(RoundedCornerShape(8.dp))
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Search, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(48.dp),
+                            tint = theme.accent
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, theme.border),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = theme.text)
+                    ) {
+                        Text("Cancel", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
+                    ) {
+                        Text("Add", fontWeight = FontWeight.Bold, color = Color.Black)
+                    }
                 }
             }
         }

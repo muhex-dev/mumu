@@ -58,7 +58,7 @@ class WidgetPickerActivity : AppCompatActivity() {
     }
 
     private fun selectWidget(info: AppWidgetProviderInfo) {
-        isShowingPicker = false
+        // isShowingPicker = false // Removed to keep picker open
         pendingWidgetId = widgetHostManager.allocateWidgetId()
         pendingProvider = info.provider
 
@@ -204,8 +204,6 @@ class WidgetPickerActivity : AppCompatActivity() {
             }
 
             WidgetHostManager.REQUEST_BIND -> {
-                // Check widget info regardless of resultCode —
-                // some devices return CANCELED even on success
                 val widgetId = data?.getIntExtra(
                     AppWidgetManager.EXTRA_APPWIDGET_ID, pendingWidgetId
                 ) ?: pendingWidgetId
@@ -217,10 +215,13 @@ class WidgetPickerActivity : AppCompatActivity() {
                     Log.e(TAG, "Bind failed — widget info still null")
                     Toast.makeText(
                         this,
-                        "Widget permission denied. Please try again.",
-                        Toast.LENGTH_LONG
+                        "Widget permission denied or failed.",
+                        Toast.LENGTH_SHORT
                     ).show()
-                    cancelAndFinish()
+                    if (WidgetSlotModel.isValidWidgetId(widgetId)) {
+                        widgetHostManager.deleteWidgetId(widgetId)
+                    }
+                    pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
                 }
             }
 
@@ -237,10 +238,20 @@ class WidgetPickerActivity : AppCompatActivity() {
 
     private fun returnSuccess(widgetId: Int) {
         Log.d(TAG, "Success widgetId=$widgetId")
-        setResult(RESULT_OK, Intent().apply {
+        
+        // Reset pending state so it doesn't get deleted on close
+        if (pendingWidgetId == widgetId) {
+            pendingWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+            pendingProvider = null
+        }
+
+        // Notify HomeFragment immediately
+        val broadcastIntent = Intent("com.example.myapplication.WIDGET_ADDED").apply {
             putExtra(EXTRA_WIDGET_ID, widgetId)
-        })
-        finish()
+        }
+        sendBroadcast(broadcastIntent)
+        
+        Toast.makeText(this, "Widget added to home screen", Toast.LENGTH_SHORT).show()
     }
 
     private fun cancelAndFinish() {

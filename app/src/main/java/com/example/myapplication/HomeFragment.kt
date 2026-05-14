@@ -88,6 +88,19 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
             UIHelper.updateBatteryUI(topPagesManager.getAllPages(), batteryPct)
         }
     }
+
+    private val widgetAddedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val widgetId = intent.getIntExtra(
+                WidgetPickerActivity.EXTRA_WIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+            if (WidgetSlotModel.isValidWidgetId(widgetId)) {
+                widgetHostManager.addSlot(widgetId)
+                topSectionController.refreshWidgetStack()
+            }
+        }
+    }
     // endregion
 
     // region Lifecycle
@@ -104,6 +117,19 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
 
         prefs.registerOnSharedPreferenceChangeListener(this)
         requireContext().registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            requireContext().registerReceiver(
+                widgetAddedReceiver, 
+                IntentFilter("com.example.myapplication.WIDGET_ADDED"),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            requireContext().registerReceiver(
+                widgetAddedReceiver, 
+                IntentFilter("com.example.myapplication.WIDGET_ADDED")
+            )
+        }
     }
 
     override fun onStart() {
@@ -137,6 +163,7 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
         super.onDestroyView()
         prefs.unregisterOnSharedPreferenceChangeListener(this)
         requireContext().unregisterReceiver(batteryReceiver)
+        requireContext().unregisterReceiver(widgetAddedReceiver)
         _binding = null
     }
     // endregion
