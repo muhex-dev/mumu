@@ -250,7 +250,7 @@ class WidgetPickerActivity : AppCompatActivity() {
 
     private fun returnSuccess(widgetId: Int) {
         Log.d(TAG, "Success widgetId=$widgetId")
-        
+
         // Reset pending state so it doesn't get deleted on close
         if (pendingWidgetId == widgetId) {
             successCount++

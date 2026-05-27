@@ -4,15 +4,12 @@ import android.app.Dialog
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import androidx.activity.result.contract.ActivityResultContracts
-import android.app.role.RoleManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.hardware.camera2.CameraManager
 import android.os.BatteryManager
 import android.os.Build
@@ -29,7 +26,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.myapplication.clock.ClockSettingsSheet
 import androidx.fragment.app.viewModels
@@ -75,12 +71,12 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
 
             if (WidgetSlotModel.isValidWidgetId(widgetId)) {
                 val newIndex = widgetHostManager.addSlot(widgetId)
-                
+
                 // Switch to widget mode so the user sees it immediately
                 if (!topSectionController.isWidgetMode()) {
                     topSectionController.switchToWidgetMode(animate = true)
                 }
-                
+
                 // Refresh the stack and scroll to the newly added widget
                 topSectionController.refreshWidgetStack(targetIndex = newIndex)
             }
@@ -103,16 +99,16 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
                 AppWidgetManager.INVALID_APPWIDGET_ID
             )
             val explicitIndex = intent.getIntExtra("extra_widget_index", -1)
-            
+
             if (WidgetSlotModel.isValidWidgetId(widgetId)) {
                 // If the receiver didn't provide an index (internal picker), we add it now
                 val newIndex = if (explicitIndex != -1) explicitIndex else widgetHostManager.addSlot(widgetId)
-                
+
                 // Switch to widget mode so the user sees it immediately
                 if (!topSectionController.isWidgetMode()) {
                     topSectionController.switchToWidgetMode(animate = true)
                 }
-                
+
                 // Refresh the stack and scroll to the newly added widget
                 topSectionController.refreshWidgetStack(targetIndex = newIndex)
             }
@@ -136,14 +132,14 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
         requireContext().registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             requireContext().registerReceiver(
-                widgetAddedReceiver, 
+                widgetAddedReceiver,
                 IntentFilter("com.example.myapplication.WIDGET_ADDED"),
                 Context.RECEIVER_NOT_EXPORTED
             )
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             requireContext().registerReceiver(
-                widgetAddedReceiver, 
+                widgetAddedReceiver,
                 IntentFilter("com.example.myapplication.WIDGET_ADDED")
             )
         }
@@ -538,7 +534,7 @@ class HomeFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListe
 
     private fun handleGestureAction(action: String?, gestureType: String) {
         gestureHandler.handleGestureAction(
-            action, 
+            action,
             gestureType,
             onOpenQuickMenu = {
                 viewModel.isQuickMenuVisible = true
