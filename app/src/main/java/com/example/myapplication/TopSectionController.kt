@@ -31,6 +31,7 @@ class TopSectionController(
 ) {
     var onAddWidgetRequested: (() -> Unit)? = null
     private var recomposeKey = 0
+    private var initialWidgetIndex = 0
 
     // Widget size tracking
     private var containerWidthPx  = 0
@@ -128,21 +129,26 @@ class TopSectionController(
 
     fun renderWidgetStack() {
         val key = recomposeKey
+        val targetIdx = initialWidgetIndex
         binding.widgetStackCompose.setContent {
             WidgetStackScreen(
                 widgetHostManager  = widgetHostManager,
                 onAddWidget        = { onAddWidgetRequested?.invoke() },
                 onEnterPositioning = { enterPositioning() },
-                recomposeKey       = key
+                recomposeKey       = key,
+                initialIndex       = targetIdx
             )
         }
+        // Reset after one-time use
+        initialWidgetIndex = 0
     }
 
-    fun refreshWidgetStack() {
-        if (isWidgetMode()) {
-            recomposeKey++
-            renderWidgetStack()
+    fun refreshWidgetStack(targetIndex: Int = -1) {
+        if (targetIndex >= 0) {
+            initialWidgetIndex = targetIndex
         }
+        recomposeKey++
+        renderWidgetStack()
     }
 
     // ── Positioning ───────────────────────────────────────────────────────────
@@ -301,6 +307,23 @@ class TopSectionController(
         WidgetSlotModel.loadTopMode(context) == WidgetSlotModel.MODE_WIDGETS
 
     fun isClockMode() = !isWidgetMode()
+
+    fun handleWidgetAddition(widgetId: Int, explicitIndex: Int = -1) {
+        if (WidgetSlotModel.isValidWidgetId(widgetId)) {
+            val newIndex = if (explicitIndex != -1) {
+                // If it was already in data but we are "adding" it again (re-ordering/broadcast), 
+                // just ensure it exists and move to it.
+                explicitIndex
+            } else {
+                widgetHostManager.addSlot(widgetId)
+            }
+            
+            if (!isWidgetMode()) {
+                switchToWidgetMode(animate = true)
+            }
+            refreshWidgetStack(targetIndex = newIndex)
+        }
+    }
 
     // ── Size reporting ────────────────────────────────────────────────────────
 

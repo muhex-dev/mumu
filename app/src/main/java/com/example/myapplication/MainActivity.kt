@@ -20,12 +20,25 @@ import com.example.myapplication.databinding.ActivityMainBinding
  */
 class MainActivity : AppCompatActivity() {
 
+    // region Properties & State
     private lateinit var binding: ActivityMainBinding
     private val prefs by lazy { getSharedPreferences("launcher_settings", MODE_PRIVATE) }
     
     var isDrawerOpen = false
         private set
 
+    /**
+     * Dedicated back press handler for the drawer.
+     * It is enabled only when the drawer is open.
+     */
+    private val drawerBackCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            closeDrawer()
+        }
+    }
+    // endregion
+
+    // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,30 +46,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupSystemUI()
-        setupBackNavigation()
-        setupPermissionOverlay()
+        setupNavigation()
+        setupGlobalOverlays()
     }
 
-    private fun setupPermissionOverlay() {
-        val composeView = ComposeView(this).apply {
-            setContent {
-                PermissionCheckerPopup(onAllGranted = {
-                    // Refresh or notify fragments if needed
-                })
-            }
-        }
-        binding.root.addView(composeView)
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // If the Home button is pressed while the drawer is open, we should return to Home
+        if (isDrawerOpen) closeDrawer()
     }
+    // endregion
 
+    // region Initialization
     private fun setupSystemUI() {
-        // Fullscreen transparent bars
+        // Ensure transparent status and navigation bars for edge-to-edge look
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
         
-        // Hide status bar on home by default for a minimal look
+        // Hide status bar on Home by default for a minimal launcher aesthetic
         setStatusBarVisible(false)
 
-        // Handle insets for the drawer container to prevent content overlap with system bars
+        // Prevent content from being hidden behind system bars in the drawer
         ViewCompat.setOnApplyWindowInsetsListener(binding.drawerContainer) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
@@ -64,39 +74,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupBackNavigation() {
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (isDrawerOpen) {
-                    closeDrawer()
-                }
-                // Back button on Home is usually handled by the system or ignored
-            }
-        })
+    private fun setupNavigation() {
+        onBackPressedDispatcher.addCallback(this, drawerBackCallback)
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        // Return to home if drawer is open when Home button/Intent is triggered
-        if (isDrawerOpen) closeDrawer()
-    }
-
-    /**
-     * Toggles the visibility of the status bar.
-     */
-    fun setStatusBarVisible(visible: Boolean) {
-        WindowCompat.getInsetsController(window, window.decorView).apply {
-            if (visible) {
-                show(WindowInsetsCompat.Type.statusBars())
-            } else {
-                hide(WindowInsetsCompat.Type.statusBars())
-                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    private fun setupGlobalOverlays() {
+        val composeView = ComposeView(this).apply {
+            setContent {
+                PermissionCheckerPopup(onAllGranted = {
+                    // Optional: Refresh fragments or trigger data load after permissions
+                })
             }
         }
+        binding.root.addView(composeView)
     }
+    // endregion
 
+    // region Drawer Management
     /**
-     * Opens the app drawer with specified configuration and animation.
+     * Opens the app drawer with the specified configuration.
      */
     fun openDrawer(
         openedByGesture: String = "swipe_up",
@@ -121,18 +117,16 @@ class MainActivity : AppCompatActivity() {
             replace(R.id.drawer_container, fragment)
         }
 
-        isDrawerOpen = true
-        binding.drawerContainer.visibility = View.VISIBLE
-        setStatusBarVisible(true)
+        setDrawerState(isOpen = true)
 
-        // Smoothly fade out the Home screen
-        animateHomeAlpha(0f, 400) {
+        // Transition: Fade out Home screen
+        animateHomeAlpha(target = 0f, duration = 400) {
             binding.fragmentContainer.visibility = View.GONE
         }
     }
 
     /**
-     * Closes the drawer and brings back the Home screen.
+     * Closes the drawer and returns focus to the Home screen.
      */
     fun closeDrawer() {
         if (!isDrawerOpen) return
@@ -140,37 +134,61 @@ class MainActivity : AppCompatActivity() {
         val animType = prefs.getString("drawer_close_anim", "fade")
         val fragment = supportFragmentManager.findFragmentById(R.id.drawer_container)
 
-        // Special handling for circular reveal exit if implemented in Fragment
+        // Support for custom circular reveal animation if the fragment implements it
         if (animType == "circle" && fragment is DrawerFragment) {
             fragment.startCircularExitAnimation {
-                supportFragmentManager.commit { remove(fragment) }
-                finishClosingDrawer()
+                removeDrawerFragment(fragment)
+                finalizeClosing()
             }
             return
         }
 
         val (enter, exit) = getAnimationResources(animType, isClosing = true)
+        removeDrawerFragment(fragment, enter, exit)
+        finalizeClosing()
+    }
 
+    private fun removeDrawerFragment(fragment: androidx.fragment.app.Fragment?, enter: Int = 0, exit: Int = 0) {
         if (fragment != null) {
             supportFragmentManager.commit {
                 setCustomAnimations(enter, exit)
                 remove(fragment)
             }
         }
-        finishClosingDrawer()
     }
 
-    private fun finishClosingDrawer() {
+    private fun setDrawerState(isOpen: Boolean) {
+        isDrawerOpen = isOpen
+        drawerBackCallback.isEnabled = isOpen
+        setStatusBarVisible(isOpen)
+        binding.drawerContainer.visibility = if (isOpen) View.VISIBLE else View.GONE
+    }
+
+    private fun finalizeClosing() {
         isDrawerOpen = false
+        drawerBackCallback.isEnabled = false
         setStatusBarVisible(false)
 
         binding.fragmentContainer.visibility = View.VISIBLE
-        animateHomeAlpha(1f, 400)
+        animateHomeAlpha(target = 1f, duration = 400)
 
-        // Delay hiding the container until animation is fully complete
+        // Delay hiding the container until fragment exit animations complete
         binding.drawerContainer.postDelayed({
             if (!isDrawerOpen) binding.drawerContainer.visibility = View.GONE
         }, 450)
+    }
+    // endregion
+
+    // region UI Helpers
+    fun setStatusBarVisible(visible: Boolean) {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            if (visible) {
+                show(WindowInsetsCompat.Type.statusBars())
+            } else {
+                hide(WindowInsetsCompat.Type.statusBars())
+                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
     }
 
     private fun animateHomeAlpha(target: Float, duration: Long, onEnd: (() -> Unit)? = null) {
@@ -181,14 +199,14 @@ class MainActivity : AppCompatActivity() {
             .start()
     }
 
-    private fun getAnimationResources(type: String?, isClosing: Boolean = false): Pair<Int, Int> {
-        return when (type) {
-            "premium" -> if (isClosing) 0 to R.anim.premium_exit else R.anim.premium_enter to 0
-            "slide_up" -> if (isClosing) 0 to R.anim.slide_out_down else R.anim.slide_in_up to 0
-            "slide_down" -> if (isClosing) 0 to R.anim.slide_in_up else R.anim.slide_out_down to 0
-            "scale" -> if (isClosing) 0 to R.anim.popup_exit else R.anim.popup_enter to 0
-            "fade" -> android.R.anim.fade_in to android.R.anim.fade_out
-            else -> 0 to 0
-        }
+    private fun getAnimationResources(type: String?, isClosing: Boolean = false): Pair<Int, Int> = when (type) {
+        "premium"    -> if (isClosing) 0 to R.anim.premium_exit else R.anim.premium_enter to 0
+        "slide_up"   -> if (isClosing) 0 to R.anim.slide_out_down else R.anim.slide_in_up to 0
+        "slide_down" -> if (isClosing) 0 to R.anim.slide_in_up else R.anim.slide_out_down to 0
+        "scale"      -> if (isClosing) 0 to R.anim.popup_exit else R.anim.popup_enter to 0
+        "fade"       -> android.R.anim.fade_in to android.R.anim.fade_out
+        else         -> 0 to 0
     }
+    // endregion
 }
+

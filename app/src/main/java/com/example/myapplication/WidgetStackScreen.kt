@@ -52,14 +52,15 @@ fun WidgetStackScreen(
     widgetHostManager: WidgetHostManager,
     onAddWidget: () -> Unit,
     onEnterPositioning: () -> Unit,
-    recomposeKey: Int = 0
+    recomposeKey: Int = 0,
+    initialIndex: Int = 0
 ) {
     val context = LocalContext.current
 
     var slots by remember(recomposeKey) {
         mutableStateOf(widgetHostManager.pruneOrphanedSlots())
     }
-    var currentIndex by remember(recomposeKey) { mutableIntStateOf(0) }
+    var currentIndex by remember(recomposeKey) { mutableIntStateOf(initialIndex) }
     var editMode     by remember { mutableStateOf(EditMode.NONE) }
     var showIndicators by remember { mutableStateOf(false) }
 
