@@ -22,6 +22,17 @@ class AppRepository private constructor(context: Context) {
     private val recentsPrefs = appContext.getSharedPreferences("recents_prefs", Context.MODE_PRIVATE)
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val userManager = appContext.getSystemService(Context.USER_SERVICE) as UserManager
+
+    private val appChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            // Clear cache and notify observers on background scope
+            cachedSystemApps = null
+            repositoryScope.launch {
+                pruneUninstalledApps()
+                _appsChangedFlow.emit(Unit)
+            }
+        }
+    }
     
     private var cachedSystemApps: List<AppModel>? = null
 
@@ -41,7 +52,6 @@ class AppRepository private constructor(context: Context) {
     }
 
     init {
-        registerAppChangeReceiver()
         pruneUninstalledApps()
         seedDefaultAppsIfEmpty()
     }
@@ -97,7 +107,8 @@ class AppRepository private constructor(context: Context) {
         }
     }
 
-    private fun registerAppChangeReceiver() {
+    fun registerReceivers() {
+        unregisterReceivers()
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
             addAction(Intent.ACTION_PACKAGE_REMOVED)
@@ -105,17 +116,7 @@ class AppRepository private constructor(context: Context) {
             addDataScheme("package")
         }
 
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                // Clear cache and notify observers on background scope
-                cachedSystemApps = null
-                repositoryScope.launch {
-                    pruneUninstalledApps()
-                    _appsChangedFlow.emit(Unit)
-                }
-            }
-        }
-        appContext.registerReceiver(receiver, filter)
+        appContext.registerReceiver(appChangeReceiver, filter)
     }
 
     private fun pruneUninstalledApps() {
@@ -359,5 +360,13 @@ class AppRepository private constructor(context: Context) {
         
         hiddenPrefs.edit().putStringSet("hidden_app_ids", currentHidden).apply()
         notifyAppsChanged()
+    }
+
+    fun unregisterReceivers() {
+        try {
+            appContext.unregisterReceiver(appChangeReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Already unregistered — safe to ignore
+        }
     }
 }

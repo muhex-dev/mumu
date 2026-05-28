@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        AppRepository.getInstance(this).registerReceivers()
         setupSystemUI()
         setupNavigation()
         setupGlobalOverlays()
@@ -54,6 +55,11 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         // If the Home button is pressed while the drawer is open, we should return to Home
         if (isDrawerOpen) closeDrawer()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AppRepository.getInstance(this).unregisterReceivers()
     }
     // endregion
 
