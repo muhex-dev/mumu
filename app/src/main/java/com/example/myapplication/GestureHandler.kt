@@ -2,12 +2,17 @@ package com.example.myapplication
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.provider.Settings
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class GestureHandler(
     private val context: Context,
@@ -15,9 +20,72 @@ class GestureHandler(
     private val repository: AppRepository,
     private val lifecycleOwner: LifecycleOwner
 ) {
+    private var gestureDetector: GestureDetector? = null
     private val prefs = context.getSharedPreferences("launcher_settings", Context.MODE_PRIVATE)
 
-    fun handleGestureAction(action: String?, gestureName: String, onOpenQuickMenu: () -> Unit, onOpenDrawer: (String, Boolean) -> Unit, onOpenHiddenApps: () -> Unit) {
+    fun attachToView(
+        root: View,
+        prefs: SharedPreferences,
+        onLongPress: () -> Unit,
+        onOpenQuickMenu: () -> Unit,
+        onOpenDrawer: (String, Boolean) -> Unit,
+        onOpenHiddenApps: (String) -> Unit
+    ) {
+        gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                handleGestureAction(
+                    prefs.getString("gesture_double_tap", "lock_screen"),
+                    "double_tap",
+                    onOpenQuickMenu,
+                    onOpenDrawer,
+                    onOpenHiddenApps
+                )
+                return true
+            }
+
+            override fun onLongPress(e: MotionEvent) {
+                onLongPress()
+            }
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (e1 == null) return false
+                val diffY = e1.y - e2.y
+                val diffX = e1.x - e2.x
+
+                return if (abs(diffX) > abs(diffY)) {
+                    if (abs(diffX) > 100 && abs(velocityX) > 100) {
+                        if (diffX > 0) handleGestureAction(prefs.getString("gesture_swipe_left", "none"), "swipe_left", onOpenQuickMenu, onOpenDrawer, onOpenHiddenApps)
+                        else handleGestureAction(prefs.getString("gesture_swipe_right", "none"), "swipe_right", onOpenQuickMenu, onOpenDrawer, onOpenHiddenApps)
+                        true
+                    } else false
+                } else {
+                    if (abs(diffY) > 100 && abs(velocityY) > 100) {
+                        if (diffY > 0) handleGestureAction(prefs.getString("gesture_swipe_up", "app_drawer"), "swipe_up", onOpenQuickMenu, onOpenDrawer, onOpenHiddenApps)
+                        else handleGestureAction(prefs.getString("gesture_swipe_down", "notifications"), "swipe_down", onOpenQuickMenu, onOpenDrawer, onOpenHiddenApps)
+                        true
+                    } else false
+                }
+            }
+
+            override fun onDown(e: MotionEvent): Boolean = true
+        })
+
+        root.setOnTouchListener { v, event ->
+            val handled = gestureDetector?.onTouchEvent(event) ?: false
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                v.performClick()
+            }
+            handled || true
+        }
+    }
+
+    fun handleGestureAction(
+        action: String?,
+        gestureName: String,
+        onOpenQuickMenu: () -> Unit,
+        onOpenDrawer: (String, Boolean) -> Unit,
+        onOpenHiddenApps: (String) -> Unit
+    ) {
         val fullKey = when (gestureName) {
             "swipe_up" -> "gesture_swipe_up"
             "swipe_down" -> "gesture_swipe_down"
@@ -36,7 +104,7 @@ class GestureHandler(
                 onOpenDrawer(gestureName, false)
             }
             "hidden_apps" -> {
-                onOpenHiddenApps()
+                onOpenHiddenApps(gestureName)
             }
             "notifications" -> {
                 if (!ScreenLockService.expandNotifications()) {

@@ -308,6 +308,23 @@ class TopSectionController(
 
     fun isClockMode() = !isWidgetMode()
 
+    fun handleWidgetAddition(widgetId: Int, explicitIndex: Int = -1) {
+        if (WidgetSlotModel.isValidWidgetId(widgetId)) {
+            val newIndex = if (explicitIndex != -1) {
+                // If it was already in data but we are "adding" it again (re-ordering/broadcast), 
+                // just ensure it exists and move to it.
+                explicitIndex
+            } else {
+                widgetHostManager.addSlot(widgetId)
+            }
+            
+            if (!isWidgetMode()) {
+                switchToWidgetMode(animate = true)
+            }
+            refreshWidgetStack(targetIndex = newIndex)
+        }
+    }
+
     // ── Size reporting ────────────────────────────────────────────────────────
 
     private fun measureAndReportSize() {
