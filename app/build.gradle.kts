@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.muhex.mumu"
     compileSdk = 35
 
     buildFeatures {
@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.muhex.mumu"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

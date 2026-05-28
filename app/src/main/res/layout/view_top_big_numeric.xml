@@ -78,7 +78,7 @@
                 android:textSize="90sp"
                 android:lineHeight="90sp" />
 
-            <com.example.myapplication.clock.OutlineTextClock
+            <com.muhex.mumu.clock.OutlineTextClock
                 android:id="@+id/minuteView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
