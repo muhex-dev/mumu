@@ -20,6 +20,7 @@ class AppRepository private constructor(context: Context) {
     private val dockPrefs = appContext.getSharedPreferences("dock_prefs", Context.MODE_PRIVATE)
     private val hiddenPrefs = appContext.getSharedPreferences("hidden_prefs", Context.MODE_PRIVATE)
     private val recentsPrefs = appContext.getSharedPreferences("recents_prefs", Context.MODE_PRIVATE)
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val userManager = appContext.getSystemService(Context.USER_SERVICE) as UserManager
     
     private var cachedSystemApps: List<AppModel>? = null
@@ -47,7 +48,7 @@ class AppRepository private constructor(context: Context) {
 
     private fun seedDefaultAppsIfEmpty() {
         if (getDockIds().isEmpty()) {
-            CoroutineScope(Dispatchers.IO).launch {
+            repositoryScope.launch {
                 val allApps = getAllSystemApps(false)
                 val defaultPackages = listOf(
                     "com.android.dialer", "com.google.android.dialer", "com.samsung.android.dialer",
@@ -108,7 +109,7 @@ class AppRepository private constructor(context: Context) {
             override fun onReceive(context: Context?, intent: Intent?) {
                 // Clear cache and notify observers on background scope
                 cachedSystemApps = null
-                CoroutineScope(Dispatchers.IO).launch {
+                repositoryScope.launch {
                     pruneUninstalledApps()
                     _appsChangedFlow.emit(Unit)
                 }
@@ -118,7 +119,7 @@ class AppRepository private constructor(context: Context) {
     }
 
     private fun pruneUninstalledApps() {
-        CoroutineScope(Dispatchers.IO).launch {
+        repositoryScope.launch {
             val allApps = getAllSystemApps(true)
             val allValidIds = allApps.map { getAppUniqueId(it) }.toSet()
 
@@ -278,7 +279,7 @@ class AppRepository private constructor(context: Context) {
     }
 
     private fun notifyAppsChanged() {
-        CoroutineScope(Dispatchers.IO).launch {
+        repositoryScope.launch {
             _appsChangedFlow.emit(Unit)
         }
     }
