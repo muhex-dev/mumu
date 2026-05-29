@@ -30,6 +30,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
     var pinnedIds by remember { mutableStateOf(repository.getPinnedIds()) }
     val allApps = remember { mutableStateOf<List<AppModel>>(emptyList()) }
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
+    val accentColor = Color(0xFF4CAF50)
 
     var nowAppsVisibleCount   by remember { mutableIntStateOf(prefs.getInt("now_apps_visible_count", 3)) }
     var nowAppsVerticalOffset by remember { mutableFloatStateOf(prefs.getFloat("now_apps_vertical_offset", 0f)) }
@@ -47,7 +48,14 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
 
     LaunchedEffect(Unit) { allApps.value = repository.getAllApps() }
 
-    LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            SectionHeader("Stack Configuration")
+        }
+
         item {
             SettingItem(
                 icon = Icons.Default.PushPin,
@@ -60,8 +68,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                 Column {
                     Text(
                         "Tap apps to pin them to your stack. The first app is always on top.",
-                        color = contentColor.copy(alpha = 0.5f),
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.bodySmall.copy(color = contentColor.copy(alpha = 0.5f)),
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                     AppSelectionContent(allApps.value, pinnedIds, repository, contentColor, backgroundColor, isPinnedApps = true) {
@@ -75,38 +82,40 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
             SettingItem(
                 icon = Icons.Default.Layers,
                 title = "Stacking & Position",
-                value = "$nowAppsVisibleCount Visible",
+                value = "$nowAppsVisibleCount Cards Visible",
                 contentColor = contentColor,
                 isExpanded = expandedItem == "stack",
                 onClick = { expandedItem = if (expandedItem == "stack") null else "stack" }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Visible Cards", color = contentColor.copy(alpha = 0.6f), fontSize = 12.sp)
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(1, 2, 3, 4, 5).forEach { count ->
-                            val isSelected = nowAppsVisibleCount == count
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.05f))
-                                    .clickable {
-                                        nowAppsVisibleCount = count
-                                        prefs.edit { putInt("now_apps_visible_count", count) }
-                                    }
-                                    .padding(vertical = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("$count", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column {
+                        Text("Visible Cards", color = contentColor.copy(alpha = 0.6f), style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(1, 2, 3, 4, 5).forEach { count ->
+                                val isSelected = nowAppsVisibleCount == count
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(if (isSelected) accentColor else contentColor.copy(alpha = 0.05f))
+                                        .clickable {
+                                            nowAppsVisibleCount = count
+                                            prefs.edit { putInt("now_apps_visible_count", count) }
+                                        }
+                                        .padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("$count", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SliderSettingFloat("Vertical Position", nowAppsVerticalOffset, 0f..800f, contentColor) {
+                    SliderSettingFloat("Vertical Alignment", nowAppsVerticalOffset, 0f..800f, contentColor) {
                         nowAppsVerticalOffset = it
                         prefs.edit { putFloat("now_apps_vertical_offset", it) }
                     }
-                    SliderSettingFloat("Horizontal Position", nowAppsHorizontalOffset, -200f..200f, contentColor) {
+                    SliderSettingFloat("Horizontal Offset", nowAppsHorizontalOffset, -200f..200f, contentColor) {
                         nowAppsHorizontalOffset = it
                         prefs.edit { putFloat("now_apps_horizontal_offset", it) }
                     }
@@ -123,7 +132,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                 isExpanded = expandedItem == "geometry",
                 onClick = { expandedItem = if (expandedItem == "geometry") null else "geometry" }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SliderSettingFloat("Width", nowAppsCardWidth, 120f..420f, contentColor) {
                         nowAppsCardWidth = it
                         prefs.edit { putFloat("now_apps_card_width", it) }
@@ -149,28 +158,26 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                 isExpanded = expandedItem == "content",
                 onClick = { expandedItem = if (expandedItem == "content") null else "content" }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     DropdownSetting("Display Mode", nowAppsDisplayMode, displayModeOptions, contentColor) {
                         nowAppsDisplayMode = it
                         prefs.edit { putString("now_apps_display_mode", it) }
                     }
-                    SliderSettingFloat("Icon Size", nowAppsIconSize, 16f..72f, contentColor) {
+                    SliderSettingFloat("Icon Scale", nowAppsIconSize, 16f..72f, contentColor) {
                         nowAppsIconSize = it
                         prefs.edit { putFloat("now_apps_icon_size", it) }
                     }
-                    SliderSettingFloat("Text Size", nowAppsTextSize, 10f..28f, contentColor) {
+                    SliderSettingFloat("Label Size", nowAppsTextSize, 10f..28f, contentColor) {
                         nowAppsTextSize = it
                         prefs.edit { putFloat("now_apps_text_size", it) }
                     }
                     Button(
                         onClick = { onOpenFontPicker("now_apps_font_family", "Pinned Apps Font") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)),
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.1f)),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Icon(Icons.Default.FontDownload, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Choose Custom Font", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                        Text("Change Font Family", color = accentColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -179,26 +186,26 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
         item {
             SettingItem(
                 icon = Icons.Default.Palette,
-                title = "Colors & Depth",
-                value = "Custom Colors",
+                title = "Appearance",
+                value = "Colors & Opacity",
                 contentColor = contentColor,
                 isExpanded = expandedItem == "theme",
                 onClick = { expandedItem = if (expandedItem == "theme") null else "theme" }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     ColorSection("Card Background", colorPalette, nowAppsBgColor) {
                         nowAppsBgColor = it.toArgb()
                         prefs.edit { putInt("now_apps_bg_color", it.toArgb()) }
                     }
-                    ColorSection("Card Stroke Color", colorPalette, nowAppsStrokeColor) {
+                    ColorSection("Stroke Color", colorPalette, nowAppsStrokeColor) {
                         nowAppsStrokeColor = it.toArgb()
                         prefs.edit { putInt("now_apps_stroke_color", it.toArgb()) }
                     }
-                    SliderSettingFloat("Overall Alpha", nowAppsOpacity, 0.1f..1f, contentColor) {
+                    SliderSettingFloat("Overall Opacity", nowAppsOpacity, 0.1f..1f, contentColor) {
                         nowAppsOpacity = it
                         prefs.edit { putFloat("now_apps_opacity", it) }
                     }
-                    ColorSection("Text Icon Color", colorPalette, nowAppsTextColor) {
+                    ColorSection("Primary Content Color", colorPalette, nowAppsTextColor) {
                         nowAppsTextColor = it.toArgb()
                         prefs.edit { putInt("now_apps_text_color", it.toArgb()) }
                     }
@@ -207,7 +214,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
         }
 
         item {
-            OutlinedButton(
+            TextButton(
                 onClick = {
                     nowAppsCardWidth = 220f
                     nowAppsCardHeight = 64f
@@ -223,11 +230,9 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                         putFloat("now_apps_corner_radius", 28f)
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor.copy(alpha = 0.4f))
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
             ) {
-                Text("Reset to Defaults", fontSize = 12.sp)
+                Text("Restore Stack Defaults", color = contentColor.copy(alpha = 0.3f), style = MaterialTheme.typography.labelMedium)
             }
         }
     }

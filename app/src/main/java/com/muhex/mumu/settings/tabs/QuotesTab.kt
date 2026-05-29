@@ -13,30 +13,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FormatQuote
+import com.muhex.mumu.settings.SectionHeader
 import com.muhex.mumu.settings.SettingToggle
 
 @Composable
 fun QuotesTab(prefs: SharedPreferences, contentColor: Color) {
     var quotesEnabled by remember { mutableStateOf(prefs.getBoolean("quotes_enabled", true)) }
 
-    LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         item {
-            Text(
-                "Quotes Settings",
-                color = contentColor,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            SectionHeader("Inspiration")
             Text(
                 "Inspirational quotes are displayed on your home screen to keep you motivated throughout the day.",
                 color = contentColor.copy(alpha = 0.6f),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
             )
         }
         item {
-            SettingToggle("Show Quotes", quotesEnabled, contentColor) {
+            SettingToggle(
+                title = "Enable Quotes",
+                checked = quotesEnabled,
+                contentColor = contentColor,
+                icon = Icons.Default.FormatQuote
+            ) {
                 quotesEnabled = it
                 prefs.edit { putBoolean("quotes_enabled", it) }
             }

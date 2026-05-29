@@ -110,7 +110,13 @@ fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, contentColo
         )
     }
 
-    LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            SectionHeader("System Gestures")
+        }
         listOf(
             "Up" to "gesture_swipe_up",
             "Down" to "gesture_swipe_down",

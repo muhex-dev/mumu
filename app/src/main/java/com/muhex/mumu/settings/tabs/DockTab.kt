@@ -44,7 +44,13 @@ fun DockTab(repository: AppRepository, prefs: SharedPreferences, contentColor: C
 
     LaunchedEffect(Unit) { allApps.value = repository.getAllApps() }
 
-    LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            SectionHeader("Dock Configuration")
+        }
         item {
             SettingItem(Icons.Default.Apps, "Apps", "${dockedIds.size} apps selected", contentColor, expandedItem == "apps", onClick = { expandedItem = if (expandedItem == "apps") null else "apps" }) {
                 Column {

@@ -23,6 +23,7 @@ import com.muhex.mumu.settings.*
 @Composable
 fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (String, String) -> Unit) {
     var expandedItem by remember { mutableStateOf<String?>(null) }
+    val accentColor = Color(0xFF4CAF50)
 
     var drawerOpacity        by remember { mutableIntStateOf(prefs.getInt("drawer_opacity", 85)) }
     var drawerItemOpacity    by remember { mutableIntStateOf(prefs.getInt("drawer_item_opacity", 100)) }
@@ -46,22 +47,32 @@ fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (
     val animationOptions = mapOf("fade" to "Fade", "slide_up" to "Slide Up", "slide_down" to "Slide Down", "scale" to "Scale", "circle" to "Circle Reveal", "none" to "None")
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
 
-    LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         item {
-            SettingItem(Icons.Default.GridView, "Layout", "Columns and Opacity", contentColor, expandedItem == "layout", onClick = { expandedItem = if (expandedItem == "layout") null else "layout" }) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Grid Columns", color = contentColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(1, 2, 3, 4).forEach { col ->
-                            val isSelected = drawerColumns == col
-                            Box(
-                                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.05f)).clickable { 
-                                    drawerColumns = col
-                                    prefs.edit { putInt("drawer_columns", col) }
-                                }.padding(vertical = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("$col", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
+            SectionHeader("Drawer Configuration")
+        }
+
+        item {
+            SettingItem(Icons.Default.GridView, "Grid Layout", "${drawerColumns} Columns, ${drawerOpacity}% Opacity", contentColor, expandedItem == "layout", onClick = { expandedItem = if (expandedItem == "layout") null else "layout" }) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column {
+                        Text("Grid Columns", color = contentColor.copy(alpha = 0.6f), style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(1, 2, 3, 4, 5).forEach { col ->
+                                val isSelected = drawerColumns == col
+                                Box(
+                                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(if (isSelected) accentColor else contentColor.copy(alpha = 0.05f)).clickable { 
+                                        drawerColumns = col
+                                        prefs.edit { putInt("drawer_columns", col) }
+                                    }.padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("$col", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -77,8 +88,8 @@ fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (
             }
         }
         item {
-            SettingItem(Icons.Default.TextFields, "Icon & Label", "Sizes and Display", contentColor, expandedItem == "label", onClick = { expandedItem = if (expandedItem == "label") null else "label" }) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SettingItem(Icons.Default.TextFields, "Typography & Icons", "Sizes and Font Selection", contentColor, expandedItem == "label", onClick = { expandedItem = if (expandedItem == "label") null else "label" }) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     DropdownSetting("Display Mode", drawerDisplayMode, displayModeOptions, contentColor) { 
                         drawerDisplayMode = it
                         prefs.edit { putString("drawer_display_mode", it) } 
@@ -91,20 +102,25 @@ fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (
                         drawerLabelSize = it
                         prefs.edit { putFloat("drawer_label_size", it) } 
                     }
-                    Button(onClick = { onOpenFontPicker("drawer_font_family", "Drawer Font") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)), shape = RoundedCornerShape(12.dp)) {
-                        Text("Select Drawer Font", color = Color(0xFF4CAF50))
+                    Button(
+                        onClick = { onOpenFontPicker("drawer_font_family", "Drawer Font") }, 
+                        modifier = Modifier.fillMaxWidth().height(48.dp), 
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.1f)), 
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Select Custom Font", color = accentColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
         item {
-            SettingItem(Icons.Default.AutoMode, "Animations", "Open & Close Effects", contentColor, expandedItem == "anim", onClick = { expandedItem = if (expandedItem == "anim") null else "anim" }) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DropdownSetting("Open Animation", drawerOpenAnim, animationOptions, contentColor) { 
+            SettingItem(Icons.Default.AutoMode, "Motion Effects", "System Animations", contentColor, expandedItem == "anim", onClick = { expandedItem = if (expandedItem == "anim") null else "anim" }) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    DropdownSetting("Enter Transition", drawerOpenAnim, animationOptions, contentColor) { 
                         drawerOpenAnim = it
                         prefs.edit { putString("drawer_open_anim", it) } 
                     }
-                    DropdownSetting("Close Animation", drawerCloseAnim, animationOptions, contentColor) { 
+                    DropdownSetting("Exit Transition", drawerCloseAnim, animationOptions, contentColor) { 
                         drawerCloseAnim = it
                         prefs.edit { putString("drawer_close_anim", it) } 
                     }
@@ -112,55 +128,40 @@ fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (
             }
         }
         item {
-            SettingItem(Icons.Default.SortByAlpha, "Scroller", "Muhex Style Scroller", contentColor, expandedItem == "scroller", onClick = { expandedItem = if (expandedItem == "scroller") null else "scroller" }) {
-                Column {
+            SettingItem(Icons.Default.SortByAlpha, "Advanced Scroller", "Experimental Curved Scroller", contentColor, expandedItem == "scroller", onClick = { expandedItem = if (expandedItem == "scroller") null else "scroller" }) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SliderSettingFloat("Edge Offset", scrollerPadding, 0.05f..0.4f, contentColor) { 
                         scrollerPadding = it
                         prefs.edit { putFloat("scroller_padding", it) } 
                     }
-                    SliderSettingFloat("Bending", scrollerBending, 0f..800f, contentColor) { 
+                    SliderSettingFloat("Curve Intensity", scrollerBending, 0f..800f, contentColor) { 
                         scrollerBending = it
                         prefs.edit { putFloat("scroller_bending", it) } 
                     }
-                    SliderSettingFloat("Curve Spread", scrollerSpread, 1f..25f, contentColor) { 
+                    SliderSettingFloat("Spread", scrollerSpread, 1f..25f, contentColor) { 
                         scrollerSpread = it
                         prefs.edit { putFloat("scroller_spread", it) } 
                     }
-                    SliderSettingFloat("Font Size", scrollerTextSize, 8f..64f, contentColor) { 
+                    SliderSettingFloat("Text Size", scrollerTextSize, 8f..64f, contentColor) { 
                         scrollerTextSize = it
                         prefs.edit { putFloat("scroller_text_size", it) } 
                     }
-                    SliderSettingFloat("Active Scale", scrollerScale, 1.0f..5f, contentColor) { 
+                    SliderSettingFloat("Active Magnification", scrollerScale, 1.0f..5f, contentColor) { 
                         scrollerScale = it
                         prefs.edit { putFloat("scroller_scale", it) } 
                     }
-                    SliderSettingFloat("Line Opacity", scrollerLineAlpha.toFloat(), 0f..255f, contentColor) { 
-                        scrollerLineAlpha = it.toInt()
-                        prefs.edit { putInt("scroller_line_alpha", it.toInt()) } 
-                    }
-                    SliderSettingFloat("Idle Opacity", scrollerBaseAlpha.toFloat(), 0f..255f, contentColor) { 
-                        scrollerBaseAlpha = it.toInt()
-                        prefs.edit { putInt("scroller_base_alpha", it.toInt()) } 
-                    }
-                    SliderSettingFloat("Anim Speed", scrollerAnimDuration.toFloat(), 50f..1000f, contentColor) { 
+                    SliderSettingFloat("Animation Duration (ms)", scrollerAnimDuration.toFloat(), 50f..1000f, contentColor) { 
                         scrollerAnimDuration = it.toInt()
                         prefs.edit { putInt("scroller_anim_duration", it.toInt()) } 
                     }
-                    SliderSettingFloat("Sensitivity", scrollerTouchSlop, 20f..300f, contentColor) { 
-                        scrollerTouchSlop = it
-                        prefs.edit { putFloat("scroller_touch_slop", it) } 
-                    }
-                    SettingToggle("Haptic Feedback", scrollerHaptic, contentColor) { 
+                    SettingToggle(
+                        title = "Haptic Response",
+                        checked = scrollerHaptic,
+                        contentColor = contentColor
+                    ) { 
                         scrollerHaptic = it
                         prefs.edit { putBoolean("scroller_haptic", it) }
                     }
-                }
-            }
-        }
-        item {
-            SettingItem(Icons.Default.Palette, "Theming", "Drawer Colors", contentColor, expandedItem == "theme", onClick = { expandedItem = if (expandedItem == "theme") null else "theme" }) {
-                Column {
-                    // Border color settings removed
                 }
             }
         }

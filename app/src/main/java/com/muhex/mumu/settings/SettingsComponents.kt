@@ -31,8 +31,8 @@ import com.muhex.mumu.AppModel
 import com.muhex.mumu.AppRepository
 
 val colorPalette = listOf(
-    Color.White, Color.Black, Color.Gray, Color.Red, Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFF673AB7), Color(0xFF3F51B5),
-    Color(0xFF2196F3), Color(0xFF03A9F4), Color(0xFF00BCD4), Color(0xFF009688), Color(0xFF4CAF50), Color(0xFF8BC34A), Color(0xFFFFEB3B), Color(0xFFFFC107)
+    Color.White, Color.Black, Color(0xFF8E8E93), Color(0xFFFF3B30), Color(0xFFFF2D55), Color(0xFFAF52DE), Color(0xFF5856D6), Color(0xFF007AFF),
+    Color(0xFF34C759), Color(0xFF5AC8FA), Color(0xFF00C7BE), Color(0xFF30B0C7), Color(0xFF4CD964), Color(0xFF8BC34A), Color(0xFFFFCC00), Color(0xFFFF9500)
 )
 
 @Composable
@@ -52,18 +52,18 @@ fun HeaderHandle(
                     onDragEnd = { onDragEnd() }
                 )
             }
-            .padding(vertical = 12.dp),
+            .padding(top = 12.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .width(40.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(contentColor.copy(alpha = 0.2f))
+                .width(36.dp)
+                .height(5.dp)
+                .clip(CircleShape)
+                .background(contentColor.copy(alpha = 0.15f))
         )
         
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
         
         Row(
             modifier = Modifier
@@ -74,15 +74,16 @@ fun HeaderHandle(
         ) {
             Text(
                 "Sheet Transparency",
-                color = contentColor.copy(alpha = 0.6f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = contentColor.copy(alpha = 0.5f),
+                    fontWeight = FontWeight.Medium
+                )
             )
             Slider(
                 value = sheetOpacity,
                 onValueChange = onOpacityChange,
                 valueRange = 0.5f..1f,
-                modifier = Modifier.width(150.dp),
+                modifier = Modifier.width(160.dp),
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF4CAF50),
                     activeTrackColor = Color(0xFF4CAF50),
@@ -103,79 +104,141 @@ fun SettingItem(
     onClick: () -> Unit = {},
     content: @Composable (() -> Unit)? = null
 ) {
+    val containerColor = contentColor.copy(alpha = if (isExpanded) 0.08f else 0.04f)
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(contentColor.copy(alpha = 0.05f))
-            .border(1.dp, contentColor.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
+            .background(containerColor)
             .clickable { onClick() }
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(Color(0xFF4CAF50).copy(alpha = 0.12f), CircleShape),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = Color(0xFF4CAF50).copy(alpha = 0.15f)
             ) {
-                Icon(icon, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(22.dp))
+                }
             }
             Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(title, color = contentColor, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(value, color = contentColor.copy(alpha = 0.6f), fontSize = 12.sp)
+                Text(
+                    title, 
+                    color = contentColor, 
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                )
+                if (value.isNotEmpty()) {
+                    Text(
+                        value, 
+                        color = contentColor.copy(alpha = 0.5f), 
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
             if (content != null) {
                 Icon(
                     if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     null,
-                    tint = contentColor.copy(alpha = 0.4f)
+                    tint = contentColor.copy(alpha = 0.3f)
                 )
             }
         }
         if (isExpanded && content != null) {
             Spacer(Modifier.height(16.dp))
-            content()
+            Box(modifier = Modifier.padding(start = 8.dp)) {
+                content()
+            }
         }
     }
 }
 
 @Composable
-fun SettingToggle(title: String, checked: Boolean, contentColor: Color, onCheckedChange: (Boolean) -> Unit) {
+fun SettingToggle(
+    title: String, 
+    checked: Boolean, 
+    contentColor: Color, 
+    icon: ImageVector? = null,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(contentColor.copy(alpha = 0.05f))
-            .border(1.dp, contentColor.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
+            .background(contentColor.copy(alpha = 0.04f))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, modifier = Modifier.weight(1f), color = contentColor, fontWeight = FontWeight.Bold)
+        if (icon != null) {
+            Icon(
+                icon, 
+                null, 
+                tint = if (checked) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.4f),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+        }
+        Text(
+            title, 
+            modifier = Modifier.weight(1f), 
+            color = contentColor, 
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+        )
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF4CAF50))
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = Color(0xFF4CAF50),
+                checkedThumbColor = Color.White,
+                uncheckedTrackColor = contentColor.copy(alpha = 0.1f),
+                uncheckedBorderColor = Color.Transparent
+            )
         )
     }
 }
 
 @Composable
-fun SliderSettingFloat(title: String, value: Float, range: ClosedFloatingPointRange<Float>, contentColor: Color, onValueChange: (Float) -> Unit) {
+fun SliderSettingFloat(
+    title: String, 
+    value: Float, 
+    range: ClosedFloatingPointRange<Float>, 
+    contentColor: Color, 
+    onValueChange: (Float) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 12.dp, horizontal = 4.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(title, color = contentColor, fontSize = 14.sp)
-            Text(String.format("%.1f", value), color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(
+                title, 
+                color = contentColor.copy(alpha = 0.7f), 
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                String.format("%.1f", value), 
+                color = Color(0xFF4CAF50), 
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+            )
         }
+        Spacer(Modifier.height(4.dp))
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
-            colors = SliderDefaults.colors(thumbColor = Color(0xFF4CAF50), activeTrackColor = Color(0xFF4CAF50))
+            colors = SliderDefaults.colors(
+                thumbColor = Color(0xFF4CAF50),
+                activeTrackColor = Color(0xFF4CAF50),
+                inactiveTrackColor = contentColor.copy(alpha = 0.1f)
+            )
         )
     }
 }
@@ -272,36 +335,43 @@ fun ModeCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) Color(0xFF7C6DFF) else contentColor.copy(alpha = 0.08f)
-    val bgColor = if (isSelected) Color(0xFF7C6DFF).copy(alpha = 0.12f) else contentColor.copy(alpha = 0.04f)
+    val accentColor = Color(0xFF4CAF50)
+    val borderColor = if (isSelected) accentColor else contentColor.copy(alpha = 0.08f)
+    val bgColor = if (isSelected) accentColor.copy(alpha = 0.1f) else contentColor.copy(alpha = 0.04f)
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(bgColor)
-            .border(1.5.dp, borderColor, RoundedCornerShape(20.dp))
+            .border(1.5.dp, borderColor, RoundedCornerShape(24.dp))
             .clickable { onClick() }
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = if (isSelected) Color(0xFF7C6DFF) else contentColor.copy(alpha = 0.4f),
-            modifier = Modifier.size(28.dp)
-        )
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = if (isSelected) accentColor.copy(alpha = 0.2f) else contentColor.copy(alpha = 0.05f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = if (isSelected) accentColor else contentColor.copy(alpha = 0.4f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
         Spacer(Modifier.height(12.dp))
         Text(
             title,
             color = contentColor,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
         )
         Text(
             subtitle,
             color = contentColor.copy(alpha = 0.5f),
-            fontSize = 11.sp,
-            lineHeight = 14.sp
+            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 14.sp)
         )
     }
 }
@@ -364,6 +434,19 @@ fun AppSelectionContent(
             }
         }
     }
+}
+
+@Composable
+fun SectionHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelLarge.copy(
+            color = Color(0xFF4CAF50),
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        ),
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+    )
 }
 
 data class UnifiedHomeItem(

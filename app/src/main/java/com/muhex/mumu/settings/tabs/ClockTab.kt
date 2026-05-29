@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.rememberAsyncImagePainter
 import com.muhex.mumu.R
+import com.muhex.mumu.settings.SectionHeader
 import com.muhex.mumu.settings.SettingItem
 import kotlin.math.roundToInt
 
@@ -128,27 +129,14 @@ fun ClockTab(prefs: SharedPreferences, contentColor: Color, onOpenClockSettings:
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(24.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Text(
-                "Clock Style",
-                color = contentColor,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
+            SectionHeader("Active Styles")
         }
 
         if (addedList.isNotEmpty()) {
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.DragHandle, null, tint = contentColor.copy(alpha = 0.3f), modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("ADDED TO HOME (DRAG TO REORDER)", color = contentColor.copy(alpha = 0.5f), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                }
-            }
-
             item {
                 ReorderableClockGrid(
                     items = addedList,
@@ -166,7 +154,7 @@ fun ClockTab(prefs: SharedPreferences, contentColor: Color, onOpenClockSettings:
 
         if (availableList.isNotEmpty()) {
             item {
-                Text("AVAILABLE STYLES", color = contentColor.copy(alpha = 0.5f), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 8.dp))
+                SectionHeader("Available Designs")
             }
 
             items(availableList.chunked(2)) { rowItems ->
@@ -195,29 +183,18 @@ fun ClockTab(prefs: SharedPreferences, contentColor: Color, onOpenClockSettings:
         }
 
         item {
-            Column {
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = contentColor.copy(alpha = 0.1f))
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    "Selected: ${clockStyles.getOrNull(selectedIndex) ?: "Unknown"}",
-                    color = contentColor.copy(alpha = 0.8f),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
+            Column(modifier = Modifier.padding(top = 16.dp)) {
                 if (selectedIndex == 0 || clockStyles.getOrNull(selectedIndex) == "Rotating") {
+                    SectionHeader("Configuration")
                     SettingItem(
                         icon = Icons.Default.Tune,
-                        title = "Customize Clock Style",
-                        value = "Colors, Fonts & Scaling",
+                        title = "Customize Colors & Fonts",
+                        value = "Adjust visual parameters for Rotating style",
                         contentColor = contentColor,
                         isExpanded = false,
                         onClick = onOpenClockSettings
-                    ) { }
+                    )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

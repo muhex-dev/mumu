@@ -152,14 +152,14 @@ private fun ClockSettingsContent(prefs: SharedPreferences, contentColor: Color, 
             val visSub = if (isRotating) "Main, Seconds, Date, Rings" else "Show/Hide Elements"
             SettingItem(Icons.Default.Visibility, "Visibility", visSub, contentColor, expandedItem == "vis", onClick = { expandedItem = if (expandedItem == "vis") null else "vis" }) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SettingToggle("Show Clock", prefs.getBoolean("clock_show_main", true), contentColor) { prefs.edit().putBoolean("clock_show_main", it).apply() }
+                    SettingToggle("Show Clock", prefs.getBoolean("clock_show_main", true), contentColor, { prefs.edit().putBoolean("clock_show_main", it).apply() })
                     if (isRotating) {
-                        SettingToggle("Seconds Ring", prefs.getBoolean("clock_show_seconds", true), contentColor) { prefs.edit().putBoolean("clock_show_seconds", it).apply() }
-                        SettingToggle("Ring Numbers", prefs.getBoolean("clock_show_ring_nums", true), contentColor) { prefs.edit().putBoolean("clock_show_ring_nums", it).apply() }
-                        SettingToggle("Center Disc", prefs.getBoolean("clock_show_center_disc", true), contentColor) { prefs.edit().putBoolean("clock_show_center_disc", it).apply() }
-                        SettingToggle("Aura Effect", prefs.getBoolean("clock_show_aura", true), contentColor) { prefs.edit().putBoolean("clock_show_aura", it).apply() }
+                        SettingToggle("Seconds Ring", prefs.getBoolean("clock_show_seconds", true), contentColor, { prefs.edit().putBoolean("clock_show_seconds", it).apply() })
+                        SettingToggle("Ring Numbers", prefs.getBoolean("clock_show_ring_nums", true), contentColor, { prefs.edit().putBoolean("clock_show_ring_nums", it).apply() })
+                        SettingToggle("Center Disc", prefs.getBoolean("clock_show_center_disc", true), contentColor, { prefs.edit().putBoolean("clock_show_center_disc", it).apply() })
+                        SettingToggle("Aura Effect", prefs.getBoolean("clock_show_aura", true), contentColor, { prefs.edit().putBoolean("clock_show_aura", it).apply() })
                     }
-                    SettingToggle("Show Date", prefs.getBoolean("clock_show_date", true), contentColor) { prefs.edit().putBoolean("clock_show_date", it).apply() }
+                    SettingToggle("Show Date", prefs.getBoolean("clock_show_date", true), contentColor, { prefs.edit().putBoolean("clock_show_date", it).apply() })
                 }
             }
         }
@@ -230,7 +230,7 @@ private fun ClockSettingsContent(prefs: SharedPreferences, contentColor: Color, 
                             unfocusedTextColor = contentColor
                         )
                     )
-                    SettingToggle("Show Custom Text", prefs.getBoolean("clock_show_custom_text", false), contentColor) { prefs.edit().putBoolean("clock_show_custom_text", it).apply() }
+                    SettingToggle("Show Custom Text", prefs.getBoolean("clock_show_custom_text", false), contentColor, { prefs.edit().putBoolean("clock_show_custom_text", it).apply() })
                     SliderSettingFloat("Text Size", prefs.getFloat("clock_custom_text_size", 34f), 10f..250f, contentColor) { prefs.edit().putFloat("clock_custom_text_size", it).apply() }
                     val config = LocalConfiguration.current
                     SliderSettingFloat("Horizontal Position", prefs.getFloat("clock_custom_text_horizontal", 0f), -config.screenWidthDp.toFloat()..config.screenWidthDp.toFloat(), contentColor) { prefs.edit().putFloat("clock_custom_text_horizontal", it).apply() }
@@ -245,10 +245,10 @@ private fun ClockSettingsContent(prefs: SharedPreferences, contentColor: Color, 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.weight(1f)) {
-                            SettingToggle("Bold", prefs.getBoolean("clock_font_bold", true), contentColor) { prefs.edit().putBoolean("clock_font_bold", it).apply() }
+                            SettingToggle("Bold", prefs.getBoolean("clock_font_bold", true), contentColor, { prefs.edit().putBoolean("clock_font_bold", it).apply() })
                         }
                         Box(Modifier.weight(1f)) {
-                            SettingToggle("Italic", prefs.getBoolean("clock_font_italic", false), contentColor) { prefs.edit().putBoolean("clock_font_italic", it).apply() }
+                            SettingToggle("Italic", prefs.getBoolean("clock_font_italic", false), contentColor, { prefs.edit().putBoolean("clock_font_italic", it).apply() })
                         }
                     }
                     
