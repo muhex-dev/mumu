@@ -542,6 +542,25 @@ internal fun ClockGridItem(
 internal fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFontPicker: (String, String) -> Unit) {
     var expandedItem by remember { mutableStateOf<String?>(null) }
 
+    var drawerOpacity        by remember { mutableIntStateOf(prefs.getInt("drawer_opacity", 85)) }
+    var drawerItemOpacity    by remember { mutableIntStateOf(prefs.getInt("drawer_item_opacity", 100)) }
+    var drawerDisplayMode    by remember { mutableStateOf(prefs.getString("drawer_display_mode", "both") ?: "both") }
+    var drawerIconSize       by remember { mutableFloatStateOf(prefs.getFloat("drawer_icon_size", 48f)) }
+    var drawerLabelSize      by remember { mutableFloatStateOf(prefs.getFloat("drawer_label_size", 12f)) }
+    var drawerOpenAnim       by remember { mutableStateOf(prefs.getString("drawer_open_anim", "fade") ?: "fade") }
+    var drawerCloseAnim      by remember { mutableStateOf(prefs.getString("drawer_close_anim", "fade") ?: "fade") }
+    var drawerColumns        by remember { mutableIntStateOf(prefs.getInt("drawer_columns", 4)) }
+    var scrollerPadding      by remember { mutableFloatStateOf(prefs.getFloat("scroller_padding", 0.12f)) }
+    var scrollerBending      by remember { mutableFloatStateOf(prefs.getFloat("scroller_bending", 300f)) }
+    var scrollerSpread       by remember { mutableFloatStateOf(prefs.getFloat("scroller_spread", 7.5f)) }
+    var scrollerTextSize     by remember { mutableFloatStateOf(prefs.getFloat("scroller_text_size", 28f)) }
+    var scrollerScale        by remember { mutableFloatStateOf(prefs.getFloat("scroller_scale", 2.4f)) }
+    var scrollerLineAlpha    by remember { mutableIntStateOf(prefs.getInt("scroller_line_alpha", 90)) }
+    var scrollerBaseAlpha    by remember { mutableIntStateOf(prefs.getInt("scroller_base_alpha", 130)) }
+    var scrollerAnimDuration by remember { mutableIntStateOf(prefs.getInt("scroller_anim_duration", 250)) }
+    var scrollerTouchSlop    by remember { mutableFloatStateOf(prefs.getFloat("scroller_touch_slop", 80f)) }
+    var scrollerHaptic       by remember { mutableStateOf(prefs.getBoolean("scroller_haptic", true)) }
+
     val animationOptions = mapOf("fade" to "Fade", "slide_up" to "Slide Up", "slide_down" to "Slide Down", "scale" to "Scale", "circle" to "Circle Reveal", "none" to "None")
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
 
@@ -552,26 +571,44 @@ internal fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFont
                     Text("Grid Columns", color = contentColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(1, 2, 3, 4).forEach { col ->
-                            val isSelected = prefs.getInt("drawer_columns", 4) == col
+                            val isSelected = drawerColumns == col
                             Box(
-                                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.05f)).clickable { prefs.edit().putInt("drawer_columns", col).apply() }.padding(vertical = 12.dp),
+                                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.05f)).clickable { 
+                                    drawerColumns = col
+                                    prefs.edit().putInt("drawer_columns", col).apply() 
+                                }.padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text("$col", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
-                    SliderSettingFloat("Background Opacity", prefs.getInt("drawer_opacity", 85).toFloat(), 0f..100f, contentColor) { prefs.edit().putInt("drawer_opacity", it.toInt()).apply() }
-                    SliderSettingFloat("Item Transparency", prefs.getInt("drawer_item_opacity", 100).toFloat(), 10f..100f, contentColor) { prefs.edit().putInt("drawer_item_opacity", it.toInt()).apply() }
+                    SliderSettingFloat("Background Opacity", drawerOpacity.toFloat(), 0f..100f, contentColor) { 
+                        drawerOpacity = it.toInt()
+                        prefs.edit().putInt("drawer_opacity", it.toInt()).apply() 
+                    }
+                    SliderSettingFloat("Item Transparency", drawerItemOpacity.toFloat(), 10f..100f, contentColor) { 
+                        drawerItemOpacity = it.toInt()
+                        prefs.edit().putInt("drawer_item_opacity", it.toInt()).apply() 
+                    }
                 }
             }
         }
         item {
             SettingItem(Icons.Default.TextFields, "Icon & Label", "Sizes and Display", contentColor, expandedItem == "label", onClick = { expandedItem = if (expandedItem == "label") null else "label" }) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DropdownSetting("Display Mode", prefs.getString("drawer_display_mode", "both") ?: "both", displayModeOptions, contentColor) { prefs.edit().putString("drawer_display_mode", it).apply() }
-                    SliderSettingFloat("Icon Size", prefs.getFloat("drawer_icon_size", 48f), 24f..72f, contentColor) { prefs.edit().putFloat("drawer_icon_size", it).apply() }
-                    SliderSettingFloat("Label Size", prefs.getFloat("drawer_label_size", 12f), 8f..24f, contentColor) { prefs.edit().putFloat("drawer_label_size", it).apply() }
+                    DropdownSetting("Display Mode", drawerDisplayMode, displayModeOptions, contentColor) { 
+                        drawerDisplayMode = it
+                        prefs.edit().putString("drawer_display_mode", it).apply() 
+                    }
+                    SliderSettingFloat("Icon Size", drawerIconSize, 24f..72f, contentColor) { 
+                        drawerIconSize = it
+                        prefs.edit().putFloat("drawer_icon_size", it).apply() 
+                    }
+                    SliderSettingFloat("Label Size", drawerLabelSize, 8f..24f, contentColor) { 
+                        drawerLabelSize = it
+                        prefs.edit().putFloat("drawer_label_size", it).apply() 
+                    }
                     Button(onClick = { onOpenFontPicker("drawer_font_family", "Drawer Font") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)), shape = RoundedCornerShape(12.dp)) {
                         Text("Select Drawer Font", color = Color(0xFF4CAF50))
                     }
@@ -581,24 +618,60 @@ internal fun DrawerTab(prefs: SharedPreferences, contentColor: Color, onOpenFont
         item {
             SettingItem(Icons.Default.AutoMode, "Animations", "Open & Close Effects", contentColor, expandedItem == "anim", onClick = { expandedItem = if (expandedItem == "anim") null else "anim" }) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DropdownSetting("Open Animation", prefs.getString("drawer_open_anim", "fade") ?: "fade", animationOptions, contentColor) { prefs.edit().putString("drawer_open_anim", it).apply() }
-                    DropdownSetting("Close Animation", prefs.getString("drawer_close_anim", "fade") ?: "fade", animationOptions, contentColor) { prefs.edit().putString("drawer_close_anim", it).apply() }
+                    DropdownSetting("Open Animation", drawerOpenAnim, animationOptions, contentColor) { 
+                        drawerOpenAnim = it
+                        prefs.edit().putString("drawer_open_anim", it).apply() 
+                    }
+                    DropdownSetting("Close Animation", drawerCloseAnim, animationOptions, contentColor) { 
+                        drawerCloseAnim = it
+                        prefs.edit().putString("drawer_close_anim", it).apply() 
+                    }
                 }
             }
         }
         item {
             SettingItem(Icons.Default.SortByAlpha, "Scroller", "Muhex Style Scroller", contentColor, expandedItem == "scroller", onClick = { expandedItem = if (expandedItem == "scroller") null else "scroller" }) {
                 Column {
-                    SliderSettingFloat("Edge Offset", prefs.getFloat("scroller_padding", 0.12f), 0.05f..0.4f, contentColor) { prefs.edit().putFloat("scroller_padding", it).apply() }
-                    SliderSettingFloat("Bending", prefs.getFloat("scroller_bending", 300f), 0f..800f, contentColor) { prefs.edit().putFloat("scroller_bending", it).apply() }
-                    SliderSettingFloat("Curve Spread", prefs.getFloat("scroller_spread", 7.5f), 1f..25f, contentColor) { prefs.edit().putFloat("scroller_spread", it).apply() }
-                    SliderSettingFloat("Font Size", prefs.getFloat("scroller_text_size", 28f), 8f..64f, contentColor) { prefs.edit().putFloat("scroller_text_size", it).apply() }
-                    SliderSettingFloat("Active Scale", prefs.getFloat("scroller_scale", 2.4f), 1.0f..5f, contentColor) { prefs.edit().putFloat("scroller_scale", it).apply() }
-                    SliderSettingFloat("Line Opacity", prefs.getInt("scroller_line_alpha", 90).toFloat(), 0f..255f, contentColor) { prefs.edit().putInt("scroller_line_alpha", it.toInt()).apply() }
-                    SliderSettingFloat("Idle Opacity", prefs.getInt("scroller_base_alpha", 130).toFloat(), 0f..255f, contentColor) { prefs.edit().putInt("scroller_base_alpha", it.toInt()).apply() }
-                    SliderSettingFloat("Anim Speed", prefs.getInt("scroller_anim_duration", 250).toFloat(), 50f..1000f, contentColor) { prefs.edit().putInt("scroller_anim_duration", it.toInt()).apply() }
-                    SliderSettingFloat("Sensitivity", prefs.getFloat("scroller_touch_slop", 80f), 20f..300f, contentColor) { prefs.edit().putFloat("scroller_touch_slop", it).apply() }
-                    SettingToggle("Haptic Feedback", prefs.getBoolean("scroller_haptic", true), contentColor) { prefs.edit().putBoolean("scroller_haptic", it).apply() }
+                    SliderSettingFloat("Edge Offset", scrollerPadding, 0.05f..0.4f, contentColor) { 
+                        scrollerPadding = it
+                        prefs.edit().putFloat("scroller_padding", it).apply() 
+                    }
+                    SliderSettingFloat("Bending", scrollerBending, 0f..800f, contentColor) { 
+                        scrollerBending = it
+                        prefs.edit().putFloat("scroller_bending", it).apply() 
+                    }
+                    SliderSettingFloat("Curve Spread", scrollerSpread, 1f..25f, contentColor) { 
+                        scrollerSpread = it
+                        prefs.edit().putFloat("scroller_spread", it).apply() 
+                    }
+                    SliderSettingFloat("Font Size", scrollerTextSize, 8f..64f, contentColor) { 
+                        scrollerTextSize = it
+                        prefs.edit().putFloat("scroller_text_size", it).apply() 
+                    }
+                    SliderSettingFloat("Active Scale", scrollerScale, 1.0f..5f, contentColor) { 
+                        scrollerScale = it
+                        prefs.edit().putFloat("scroller_scale", it).apply() 
+                    }
+                    SliderSettingFloat("Line Opacity", scrollerLineAlpha.toFloat(), 0f..255f, contentColor) { 
+                        scrollerLineAlpha = it.toInt()
+                        prefs.edit().putInt("scroller_line_alpha", it.toInt()).apply() 
+                    }
+                    SliderSettingFloat("Idle Opacity", scrollerBaseAlpha.toFloat(), 0f..255f, contentColor) { 
+                        scrollerBaseAlpha = it.toInt()
+                        prefs.edit().putInt("scroller_base_alpha", it.toInt()).apply() 
+                    }
+                    SliderSettingFloat("Anim Speed", scrollerAnimDuration.toFloat(), 50f..1000f, contentColor) { 
+                        scrollerAnimDuration = it.toInt()
+                        prefs.edit().putInt("scroller_anim_duration", it.toInt()).apply() 
+                    }
+                    SliderSettingFloat("Sensitivity", scrollerTouchSlop, 20f..300f, contentColor) { 
+                        scrollerTouchSlop = it
+                        prefs.edit().putFloat("scroller_touch_slop", it).apply() 
+                    }
+                    SettingToggle("Haptic Feedback", scrollerHaptic, contentColor) { 
+                        scrollerHaptic = it
+                        prefs.edit().putBoolean("scroller_haptic", it).apply() 
+                    }
                 }
             }
         }
@@ -618,6 +691,17 @@ internal fun DockTab(repository: AppRepository, prefs: SharedPreferences, conten
     var dockedIds by remember { mutableStateOf(repository.getDockIds()) }
     var orientation by remember { mutableStateOf(prefs.getString("dock_orientation", "horizontal") ?: "horizontal") }
     var dockAlignment by remember { mutableStateOf(prefs.getString("dock_alignment", "left") ?: "left") }
+
+    var dockBottomMargin    by remember { mutableFloatStateOf(prefs.getFloat("dock_bottom_margin", 8f)) }
+    var dockHorizontalMargin by remember { mutableFloatStateOf(prefs.getFloat("dock_horizontal_margin", 0f)) }
+    var dockSpacing         by remember { mutableFloatStateOf(prefs.getFloat("dock_spacing", 16f)) }
+    var dockDisplayMode     by remember { mutableStateOf(prefs.getString("dock_display_mode", "icon") ?: "icon") }
+    var dockIconSize        by remember { mutableFloatStateOf(prefs.getFloat("dock_icon_size", 48f)) }
+    var dockTextSize        by remember { mutableFloatStateOf(prefs.getFloat("dock_text_size", 10f)) }
+    var dockBgColor         by remember { mutableIntStateOf(prefs.getInt("dock_bg_color", AndroidColor.WHITE)) }
+    var dockBgAlpha         by remember { mutableFloatStateOf(prefs.getFloat("dock_bg_alpha", 0.15f)) }
+    var dockTextColor       by remember { mutableIntStateOf(prefs.getInt("dock_text_color", AndroidColor.WHITE)) }
+
     val allApps = remember { mutableStateOf<List<AppModel>>(emptyList()) }
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
     val orientationOptions = mapOf("horizontal" to "Horizontal", "vertical" to "Vertical")
@@ -656,15 +740,18 @@ internal fun DockTab(repository: AppRepository, prefs: SharedPreferences, conten
                             prefs.edit().putString("dock_alignment", it).apply()
                         }
                     }
-                    SliderSettingFloat("Bottom Margin", prefs.getFloat("dock_bottom_margin", 8f), 0f..200f, contentColor) {
+                    SliderSettingFloat("Bottom Margin", dockBottomMargin, 0f..200f, contentColor) {
+                        dockBottomMargin = it
                         prefs.edit().putFloat("dock_bottom_margin", it).apply()
                     }
                     if (orientation == "vertical") {
-                        SliderSettingFloat("Side Margin", prefs.getFloat("dock_horizontal_margin", 0f), 0f..200f, contentColor) {
+                        SliderSettingFloat("Side Margin", dockHorizontalMargin, 0f..200f, contentColor) {
+                            dockHorizontalMargin = it
                             prefs.edit().putFloat("dock_horizontal_margin", it).apply()
                         }
                     }
-                    SliderSettingFloat("Item Spacing", prefs.getFloat("dock_spacing", 16f), 0f..100f, contentColor) {
+                    SliderSettingFloat("Item Spacing", dockSpacing, 0f..100f, contentColor) {
+                        dockSpacing = it
                         prefs.edit().putFloat("dock_spacing", it).apply()
                     }
                 }
@@ -673,9 +760,18 @@ internal fun DockTab(repository: AppRepository, prefs: SharedPreferences, conten
         item {
             SettingItem(Icons.Default.TextFields, "Content", "Text and Display", contentColor, expandedItem == "content", onClick = { expandedItem = if (expandedItem == "content") null else "content" }) {
                 Column {
-                    DropdownSetting("Display Mode", prefs.getString("dock_display_mode", "icon") ?: "icon", displayModeOptions, contentColor) { prefs.edit().putString("dock_display_mode", it).apply() }
-                    SliderSettingFloat("Icon Size", prefs.getFloat("dock_icon_size", 48f), 24f..96f, contentColor) { prefs.edit().putFloat("dock_icon_size", it).apply() }
-                    SliderSettingFloat("Text Size", prefs.getFloat("dock_text_size", 10f), 8f..20f, contentColor) { prefs.edit().putFloat("dock_text_size", it).apply() }
+                    DropdownSetting("Display Mode", dockDisplayMode, displayModeOptions, contentColor) { 
+                        dockDisplayMode = it
+                        prefs.edit().putString("dock_display_mode", it).apply() 
+                    }
+                    SliderSettingFloat("Icon Size", dockIconSize, 24f..96f, contentColor) { 
+                        dockIconSize = it
+                        prefs.edit().putFloat("dock_icon_size", it).apply() 
+                    }
+                    SliderSettingFloat("Text Size", dockTextSize, 8f..20f, contentColor) { 
+                        dockTextSize = it
+                        prefs.edit().putFloat("dock_text_size", it).apply() 
+                    }
                     Button(
                         onClick = { onOpenFontPicker("dock_font_family", "Dock Font") },
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -692,9 +788,18 @@ internal fun DockTab(repository: AppRepository, prefs: SharedPreferences, conten
         item {
             SettingItem(Icons.Default.Palette, "Theming", "Colors and Alpha", contentColor, expandedItem == "theme", onClick = { expandedItem = if (expandedItem == "theme") null else "theme" }) {
                 Column {
-                    ColorSection("Background Color", colorPalette, prefs.getInt("dock_bg_color", AndroidColor.WHITE)) { prefs.edit().putInt("dock_bg_color", it.toArgb()).apply() }
-                    SliderSettingFloat("Background Alpha", prefs.getFloat("dock_bg_alpha", 0.15f), 0f..1f, contentColor) { prefs.edit().putFloat("dock_bg_alpha", it).apply() }
-                    ColorSection("Text Color", colorPalette, prefs.getInt("dock_text_color", AndroidColor.WHITE)) { prefs.edit().putInt("dock_text_color", it.toArgb()).apply() }
+                    ColorSection("Background Color", colorPalette, dockBgColor) { 
+                        dockBgColor = it.toArgb()
+                        prefs.edit().putInt("dock_bg_color", it.toArgb()).apply() 
+                    }
+                    SliderSettingFloat("Background Alpha", dockBgAlpha, 0f..1f, contentColor) { 
+                        dockBgAlpha = it
+                        prefs.edit().putFloat("dock_bg_alpha", it).apply() 
+                    }
+                    ColorSection("Text Color", colorPalette, dockTextColor) { 
+                        dockTextColor = it.toArgb()
+                        prefs.edit().putInt("dock_text_color", it.toArgb()).apply() 
+                    }
                 }
             }
         }
@@ -707,6 +812,20 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
     var pinnedIds by remember { mutableStateOf(repository.getPinnedIds()) }
     val allApps = remember { mutableStateOf<List<AppModel>>(emptyList()) }
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
+
+    var nowAppsVisibleCount   by remember { mutableIntStateOf(prefs.getInt("now_apps_visible_count", 3)) }
+    var nowAppsVerticalOffset by remember { mutableFloatStateOf(prefs.getFloat("now_apps_vertical_offset", 0f)) }
+    var nowAppsHorizontalOffset by remember { mutableFloatStateOf(prefs.getFloat("now_apps_horizontal_offset", 0f)) }
+    var nowAppsCardWidth      by remember { mutableFloatStateOf(prefs.getFloat("now_apps_card_width", 220f)) }
+    var nowAppsCardHeight     by remember { mutableFloatStateOf(prefs.getFloat("now_apps_card_height", 64f)) }
+    var nowAppsCornerRadius   by remember { mutableFloatStateOf(prefs.getFloat("now_apps_corner_radius", 28f)) }
+    var nowAppsDisplayMode    by remember { mutableStateOf(prefs.getString("now_apps_display_mode", "both") ?: "both") }
+    var nowAppsIconSize       by remember { mutableFloatStateOf(prefs.getFloat("now_apps_icon_size", 32f)) }
+    var nowAppsTextSize       by remember { mutableFloatStateOf(prefs.getFloat("now_apps_text_size", 15f)) }
+    var nowAppsBgColor        by remember { mutableIntStateOf(prefs.getInt("now_apps_bg_color", AndroidColor.WHITE)) }
+    var nowAppsStrokeColor    by remember { mutableIntStateOf(prefs.getInt("now_apps_stroke_color", AndroidColor.WHITE)) }
+    var nowAppsOpacity        by remember { mutableFloatStateOf(prefs.getFloat("now_apps_opacity", 1.0f)) }
+    var nowAppsTextColor      by remember { mutableIntStateOf(prefs.getInt("now_apps_text_color", AndroidColor.BLACK)) }
 
     LaunchedEffect(Unit) { allApps.value = repository.getAllApps() }
 
@@ -738,24 +857,23 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
             SettingItem(
                 icon = Icons.Default.Layers,
                 title = "Stacking & Position",
-                value = "${prefs.getInt("now_apps_visible_count", 3)} Visible",
+                value = "$nowAppsVisibleCount Visible",
                 contentColor = contentColor,
                 isExpanded = expandedItem == "stack",
                 onClick = { expandedItem = if (expandedItem == "stack") null else "stack" }
             ) {
-                var selectedVisibleCount by remember { mutableIntStateOf(prefs.getInt("now_apps_visible_count", 3)) }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Visible Cards", color = contentColor.copy(alpha = 0.6f), fontSize = 12.sp)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(1, 2, 3, 4, 5).forEach { count ->
-                            val isSelected = selectedVisibleCount == count
+                            val isSelected = nowAppsVisibleCount == count
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.05f))
                                     .clickable {
-                                        selectedVisibleCount = count
+                                        nowAppsVisibleCount = count
                                         prefs.edit().putInt("now_apps_visible_count", count).apply()
                                     }
                                     .padding(vertical = 12.dp),
@@ -766,10 +884,12 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    SliderSettingFloat("Vertical Position", prefs.getFloat("now_apps_vertical_offset", 0f), 0f..800f, contentColor) {
+                    SliderSettingFloat("Vertical Position", nowAppsVerticalOffset, 0f..800f, contentColor) {
+                        nowAppsVerticalOffset = it
                         prefs.edit().putFloat("now_apps_vertical_offset", it).apply()
                     }
-                    SliderSettingFloat("Horizontal Position", prefs.getFloat("now_apps_horizontal_offset", 0f), -200f..200f, contentColor) {
+                    SliderSettingFloat("Horizontal Position", nowAppsHorizontalOffset, -200f..200f, contentColor) {
+                        nowAppsHorizontalOffset = it
                         prefs.edit().putFloat("now_apps_horizontal_offset", it).apply()
                     }
                 }
@@ -780,19 +900,22 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
             SettingItem(
                 icon = Icons.Default.AspectRatio,
                 title = "Card Geometry",
-                value = "${prefs.getFloat("now_apps_card_width", 220f).toInt()} x ${prefs.getFloat("now_apps_card_height", 64f).toInt()}",
+                value = "${nowAppsCardWidth.toInt()} x ${nowAppsCardHeight.toInt()}",
                 contentColor = contentColor,
                 isExpanded = expandedItem == "geometry",
                 onClick = { expandedItem = if (expandedItem == "geometry") null else "geometry" }
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SliderSettingFloat("Width", prefs.getFloat("now_apps_card_width", 220f), 120f..420f, contentColor) {
+                    SliderSettingFloat("Width", nowAppsCardWidth, 120f..420f, contentColor) {
+                        nowAppsCardWidth = it
                         prefs.edit().putFloat("now_apps_card_width", it).apply()
                     }
-                    SliderSettingFloat("Height", prefs.getFloat("now_apps_card_height", 64f), 40f..180f, contentColor) {
+                    SliderSettingFloat("Height", nowAppsCardHeight, 40f..180f, contentColor) {
+                        nowAppsCardHeight = it
                         prefs.edit().putFloat("now_apps_card_height", it).apply()
                     }
-                    SliderSettingFloat("Corner Roundness", prefs.getFloat("now_apps_corner_radius", 28f), 0f..64f, contentColor) {
+                    SliderSettingFloat("Corner Roundness", nowAppsCornerRadius, 0f..64f, contentColor) {
+                        nowAppsCornerRadius = it
                         prefs.edit().putFloat("now_apps_corner_radius", it).apply()
                     }
                 }
@@ -803,19 +926,22 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
             SettingItem(
                 icon = Icons.Default.TextFields,
                 title = "Display & Font",
-                value = displayModeOptions[prefs.getString("now_apps_display_mode", "both")] ?: "Both",
+                value = displayModeOptions[nowAppsDisplayMode] ?: "Both",
                 contentColor = contentColor,
                 isExpanded = expandedItem == "content",
                 onClick = { expandedItem = if (expandedItem == "content") null else "content" }
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DropdownSetting("Display Mode", prefs.getString("now_apps_display_mode", "both") ?: "both", displayModeOptions, contentColor) {
+                    DropdownSetting("Display Mode", nowAppsDisplayMode, displayModeOptions, contentColor) {
+                        nowAppsDisplayMode = it
                         prefs.edit().putString("now_apps_display_mode", it).apply()
                     }
-                    SliderSettingFloat("Icon Size", prefs.getFloat("now_apps_icon_size", 32f), 16f..72f, contentColor) {
+                    SliderSettingFloat("Icon Size", nowAppsIconSize, 16f..72f, contentColor) {
+                        nowAppsIconSize = it
                         prefs.edit().putFloat("now_apps_icon_size", it).apply()
                     }
-                    SliderSettingFloat("Text Size", prefs.getFloat("now_apps_text_size", 15f), 10f..28f, contentColor) {
+                    SliderSettingFloat("Text Size", nowAppsTextSize, 10f..28f, contentColor) {
+                        nowAppsTextSize = it
                         prefs.edit().putFloat("now_apps_text_size", it).apply()
                     }
                     Button(
@@ -842,16 +968,20 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
                 onClick = { expandedItem = if (expandedItem == "theme") null else "theme" }
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ColorSection("Card Background", colorPalette, prefs.getInt("now_apps_bg_color", AndroidColor.WHITE)) {
+                    ColorSection("Card Background", colorPalette, nowAppsBgColor) {
+                        nowAppsBgColor = it.toArgb()
                         prefs.edit().putInt("now_apps_bg_color", it.toArgb()).apply()
                     }
-                    ColorSection("Card Stroke Color", colorPalette, prefs.getInt("now_apps_stroke_color", AndroidColor.WHITE)) {
+                    ColorSection("Card Stroke Color", colorPalette, nowAppsStrokeColor) {
+                        nowAppsStrokeColor = it.toArgb()
                         prefs.edit().putInt("now_apps_stroke_color", it.toArgb()).apply()
                     }
-                    SliderSettingFloat("Overall Alpha", prefs.getFloat("now_apps_opacity", 1.0f), 0.1f..1f, contentColor) {
+                    SliderSettingFloat("Overall Alpha", nowAppsOpacity, 0.1f..1f, contentColor) {
+                        nowAppsOpacity = it
                         prefs.edit().putFloat("now_apps_opacity", it).apply()
                     }
-                    ColorSection("Text & Icon Color", colorPalette, prefs.getInt("now_apps_text_color", AndroidColor.BLACK)) {
+                    ColorSection("Text & Icon Color", colorPalette, nowAppsTextColor) {
+                        nowAppsTextColor = it.toArgb()
                         prefs.edit().putInt("now_apps_text_color", it.toArgb()).apply()
                     }
                 }
@@ -861,6 +991,12 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
         item {
             OutlinedButton(
                 onClick = {
+                    nowAppsCardWidth = 220f
+                    nowAppsCardHeight = 64f
+                    nowAppsVerticalOffset = 0f
+                    nowAppsVisibleCount = 3
+                    nowAppsCornerRadius = 28f
+                    
                     prefs.edit()
                         .putFloat("now_apps_card_width", 220f)
                         .putFloat("now_apps_card_height", 64f)
@@ -879,6 +1015,7 @@ internal fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, 
     }
 }
 
+
 @Composable
 internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, contentColor: Color) {
     val gestureOptions = mapOf(
@@ -896,6 +1033,26 @@ internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, co
         value = repository.getAllApps()
     }
 
+    val gestureKeys = remember {
+        listOf("gesture_swipe_up", "gesture_swipe_down", "gesture_swipe_left", "gesture_swipe_right", "gesture_double_tap")
+    }
+
+    val gestureAssignments = remember {
+        mutableStateMapOf<String, String>().also { map ->
+            gestureKeys.forEach { key ->
+                map[key] = prefs.getString(key, "none") ?: "none"
+            }
+        }
+    }
+    val gestureAppIds = remember {
+        mutableStateMapOf<String, String>().also { map ->
+            gestureKeys.forEach { key ->
+                val appIdKey = "${key}_app_id"
+                map[appIdKey] = prefs.getString(appIdKey, "") ?: ""
+            }
+        }
+    }
+
     if (selectingAppForKey != null) {
         AlertDialog(
             onDismissRequest = { selectingAppForKey = null },
@@ -909,9 +1066,14 @@ internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, co
                                     .fillMaxWidth()
                                     .clickable {
                                         val appId = repository.getAppUniqueId(app)
+                                        val key = selectingAppForKey!!
+                                        
+                                        gestureAppIds["${key}_app_id"] = appId
+                                        gestureAssignments[key] = "open_app"
+
                                         prefs.edit()
-                                            .putString("${selectingAppForKey}_app_id", appId)
-                                            .putString(selectingAppForKey!!, "open_app")
+                                            .putString("${key}_app_id", appId)
+                                            .putString(key, "open_app")
                                             .apply()
                                         selectingAppForKey = null
                                         expandedItem = null
@@ -953,8 +1115,8 @@ internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, co
             "Double Tap" to "gesture_double_tap"
         ).forEach { (label, key) ->
             item {
-                val current = prefs.getString(key, "none") ?: "none"
-                val assignedAppId = prefs.getString("${key}_app_id", "") ?: ""
+                val current = gestureAssignments[key] ?: "none"
+                val assignedAppId = gestureAppIds["${key}_app_id"] ?: ""
                 val assignedAppLabel = if (current == "open_app" && assignedAppId.isNotEmpty()) {
                     allApps.find { repository.getAppUniqueId(it) == assignedAppId }?.label ?: "Unknown App"
                 } else null
@@ -978,6 +1140,7 @@ internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, co
                                         if (optionKey == "open_app") {
                                             selectingAppForKey = key
                                         } else {
+                                            gestureAssignments[key] = optionKey
                                             prefs.edit().putString(key, optionKey).apply()
                                             expandedItem = null
                                         }
@@ -996,8 +1159,12 @@ internal fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, co
     }
 }
 
+
+
 @Composable
 internal fun QuotesTab(prefs: SharedPreferences, contentColor: Color) {
+    var quotesEnabled by remember { mutableStateOf(prefs.getBoolean("quotes_enabled", true)) }
+
     LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text(
@@ -1015,7 +1182,8 @@ internal fun QuotesTab(prefs: SharedPreferences, contentColor: Color) {
             )
         }
         item {
-            SettingToggle("Show Quotes", prefs.getBoolean("quotes_enabled", true), contentColor) {
+            SettingToggle("Show Quotes", quotesEnabled, contentColor) {
+                quotesEnabled = it
                 prefs.edit().putBoolean("quotes_enabled", it).apply()
             }
         }
