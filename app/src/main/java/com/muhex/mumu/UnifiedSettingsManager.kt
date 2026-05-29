@@ -28,7 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import androidx.compose.material.icons.filled.Widgets
+import com.muhex.mumu.settings.*
+import com.muhex.mumu.settings.tabs.*
 import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
