@@ -46,6 +46,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
     private var showHiddenOnly = false
 
     // UI State for Compose Overlays
+    private var isCustomizeVisible by mutableStateOf(false)
     private var isSettingsVisible by mutableStateOf(false)
     private var isClockSettingsVisible by mutableStateOf(false)
     private var isFontSettingsVisible by mutableStateOf(false)
@@ -139,10 +140,15 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
                 onDismiss = { hideSettings() }
             )
 
+            CustomizePopup(
+                isVisible = isCustomizeVisible,
+                onDismiss = { hideCustomize() }
+            )
+
             ClockSettingsSheet(
                 prefs = prefs,
                 isVisible = isClockSettingsVisible,
-                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "clock") },
+                onOpenFontPicker = {  key, title -> showFontPicker(key, title, from = "clock") },
                 onDismiss = { hideClockSettings() }
             )
 
@@ -163,6 +169,16 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
     private fun hideSettings() {
         isSettingsVisible = false
+        checkOverlayVisibility()
+    }
+
+    private fun showCustomize() {
+        isCustomizeVisible = true
+        binding.drawerSettingsCompose.visibility = View.VISIBLE
+    }
+
+    private fun hideCustomize() {
+        isCustomizeVisible = false
         checkOverlayVisibility()
     }
 
@@ -194,7 +210,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
     }
 
     private fun checkOverlayVisibility() {
-        if (!isSettingsVisible && !isClockSettingsVisible && !isFontSettingsVisible) {
+        if (!isSettingsVisible && !isClockSettingsVisible && !isFontSettingsVisible && !isCustomizeVisible) {
             binding.drawerSettingsCompose.visibility = View.GONE
         }
     }
@@ -373,6 +389,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
         popup.menu.apply {
             add("Refresh")
             add(if (showHiddenOnly) "Show All Apps" else "Hidden Apps")
+            add("Customize")
             add("Drawer Settings")
         }
 
@@ -399,6 +416,9 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
                     showHiddenOnly = false
                     binding.searchViewApps.queryHint = "Search Apps"
                     refreshAppList()
+                }
+                "Customize" -> {
+                    showCustomize()
                 }
                 "Drawer Settings" -> showDrawerSettings()
             }
