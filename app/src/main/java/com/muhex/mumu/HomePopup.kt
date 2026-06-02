@@ -3,26 +3,29 @@ package com.muhex.mumu
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 
 /**
  * Actions that can be performed from the Home Popup
@@ -32,14 +35,12 @@ sealed class HomePopupAction {
     object Muhex : HomePopupAction()
     object Settings : HomePopupAction()
     object Dock : HomePopupAction()
-    object PinnedApps : HomePopupAction()
-    object Gestures : HomePopupAction()
     object Dismiss : HomePopupAction()
 }
 
 /**
  * HomePopup: A premium Compose-based customization menu.
- * Handles UI rendering and notifies the host of actions.
+ * Now a vertical list with dragging support for consistency.
  */
 @Composable
 fun HomePopup(
@@ -47,93 +48,149 @@ fun HomePopup(
     onAction: (HomePopupAction) -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val backgroundColor = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.95f) else Color.White.copy(alpha = 0.95f)
+    val backgroundColor = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.98f) else Color.White.copy(alpha = 0.98f)
     val contentColor = if (isDark) Color.White else Color.Black
-    val iconBackground = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f)
+    val iconBackground = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+    
+    var verticalOffset by remember { mutableFloatStateOf(0f) }
+
+    // Reset offset when visibility changes to hidden
+    LaunchedEffect(isVisible) {
+        if (!isVisible) verticalOffset = 0f
+    }
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn() + scaleIn(initialScale = 0.9f),
-        exit = fadeOut() + scaleOut(targetScale = 0.9f)
+        enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }) + scaleIn(initialScale = 0.95f),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }) + scaleOut(targetScale = 0.95f)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Transparent)
-                .clickable { onAction(HomePopupAction.Dismiss) },
+                .background(Color.Black.copy(alpha = 0.3f))
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onAction(HomePopupAction.Dismiss) })
+                },
             contentAlignment = Alignment.BottomCenter
         ) {
-            Column(
+            Surface(
                 modifier = Modifier
-                    .padding(bottom = 120.dp)
-                    .clickable(enabled = false) {} 
-                    .fillMaxWidth(0.9f) 
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(backgroundColor)
-                    .padding(vertical = 24.dp, horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(bottom = 64.dp)
+                    .widthIn(max = 500.dp)
+                    .fillMaxWidth(0.8f)
+                    .offset { IntOffset(0, verticalOffset.roundToInt()) }
+                    .clickable(enabled = false) {},
+                shape = RoundedCornerShape(32.dp),
+                color = backgroundColor,
+                contentColor = contentColor,
+                tonalElevation = 12.dp
             ) {
-                Text(
-                    text = "Home Screen",
-                    color = contentColor,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 20.dp)
-                )
-
-                // Row 1
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CustomizationItem(
-                        icon = Icons.Default.Image,
-                        label = "Wallpaper",
-                        contentColor = contentColor,
-                        iconBackground = iconBackground,
-                        onClick = { onAction(HomePopupAction.Wallpaper) }
-                    )
-                    CustomizationItem(
-                        icon = Icons.Default.Add,
-                        label = "Muhex",
-                        contentColor = contentColor,
-                        iconBackground = iconBackground,
-                        onClick = { onAction(HomePopupAction.Muhex) }
-                    )
-                    CustomizationItem(
-                        icon = Icons.Default.Settings,
-                        label = "Settings",
-                        contentColor = contentColor,
-                        iconBackground = iconBackground,
-                        onClick = { onAction(HomePopupAction.Settings) }
-                    )
-                }
+                    // Header & Drag Handle
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures { _, dragAmount ->
+                                    verticalOffset = (verticalOffset + dragAmount).coerceIn(-screenHeightPx * 0.4f, screenHeightPx * 0.2f)
+                                }
+                            }
+                            .pointerInput(Unit) {
+                                detectTapGestures(onDoubleTap = { verticalOffset = 0f })
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(CircleShape)
+                                .background(contentColor.copy(alpha = 0.2f))
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Home Customization",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = contentColor,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    // Vertical List of Actions
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        HomeListItem(
+                            icon = Icons.Default.Image,
+                            label = "Wallpaper",
+                            description = "Change home screen background",
+                            contentColor = contentColor,
+                            iconBackground = iconBackground,
+                            onClick = { onAction(HomePopupAction.Wallpaper) }
+                        )
+                        HomeListItem(
+                            icon = Icons.Default.Palette,
+                            label = "Muhex Customizer",
+                            description = "Clock, theme and UI effects",
+                            contentColor = contentColor,
+                            iconBackground = iconBackground,
+                            onClick = { onAction(HomePopupAction.Muhex) }
+                        )
+                        HomeListItem(
+                            icon = Icons.Default.Layers,
+                            label = "Dock Settings",
+                            description = "Bottom bar layout and items",
+                            contentColor = contentColor,
+                            iconBackground = iconBackground,
+                            onClick = { onAction(HomePopupAction.Dock) }
+                        )
+                        HomeListItem(
+                            icon = Icons.Default.Settings,
+                            label = "Launcher Settings",
+                            description = "Grid, icons and system options",
+                            contentColor = contentColor,
+                            iconBackground = iconBackground,
+                            onClick = { onAction(HomePopupAction.Settings) }
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun CustomizationItem(
+fun HomeListItem(
     icon: ImageVector,
     label: String,
+    description: String,
     contentColor: Color,
     iconBackground: Color,
     onClick: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Row(
         modifier = Modifier
-            .width(72.dp) // Reverted to a more standard size since we have more room in 2 rows
-            .clip(RoundedCornerShape(16.dp))
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp) // Standard icon size
+                .size(44.dp)
                 .background(iconBackground, CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -141,17 +198,29 @@ fun CustomizationItem(
                 imageVector = icon,
                 contentDescription = label,
                 tint = contentColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            color = contentColor,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            maxLines = 1
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = description,
+                color = contentColor.copy(alpha = 0.5f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = contentColor.copy(alpha = 0.3f),
+            modifier = Modifier.size(20.dp)
         )
     }
 }

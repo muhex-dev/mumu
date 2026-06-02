@@ -239,6 +239,14 @@ class HomeFragment : Fragment() {
                     onDismiss = { homeOverlayController.dismissComposeOverlays() }
                 )
 
+                DockSettingsPopup(
+                    isVisible = viewModel.isDockSettingsVisible,
+                    repository = repository,
+                    prefs = prefs,
+                    onOpenFontPicker = { key, title -> homeOverlayController.showFontPicker(key, title, source = "dock") },
+                    onDismiss = { homeOverlayController.dismissComposeOverlays() }
+                )
+
                 ClockSettingsSheet(
                     prefs = prefs,
                     isVisible = viewModel.isClockSettingsVisible,

@@ -22,6 +22,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // UI State
     var isHomePopupVisible by mutableStateOf(false)
     var isUnifiedSettingsVisible by mutableStateOf(false)
+    var isDockSettingsVisible by mutableStateOf(false)
     var unifiedSettingsInitialTab by mutableStateOf(0)
     var isClockSettingsVisible by mutableStateOf(false)
     var isMuhexSettingsVisible by mutableStateOf(false)
@@ -69,6 +70,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun dismissComposeOverlays() {
         isHomePopupVisible = false
         isUnifiedSettingsVisible = false
+        isDockSettingsVisible = false
         isClockSettingsVisible = false
         isQuickMenuVisible = false
         isFontSettingsVisible = false

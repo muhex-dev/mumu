@@ -24,9 +24,9 @@ class MuhexScroller @JvmOverloads constructor(
     // --- CONFIGURATION (Adjustable via Settings) ---
     var edgePaddingRatio = 0.12f
     var maxBendingDistance = 300f
-    var curveSpread = 11.5f
-    var baseTextSize = 18f
-    var selectedTextScale = 1.4f
+    var curveSpread = 7.5f
+    var baseTextSize = 28f
+    var selectedTextScale = 2.4f
     var touchSlop = 80f
     var lineOffsetFromLetter = 40f
     var hapticEnabled = true

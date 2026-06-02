@@ -34,11 +34,11 @@ import androidx.compose.ui.window.DialogProperties
 import kotlin.math.roundToInt
 
 /**
- * CustomizePopup: A central overlay for managing drawer-specific UI settings.
+ * DrawerSettingsPopup: A central overlay for managing drawer-specific UI settings.
  * Handles grid layouts, typography, icons, motion transitions, and the advanced scroller.
  */
 @Composable
-fun CustomizePopup(
+fun DrawerSettingsPopup(
     isVisible: Boolean,
     prefs: SharedPreferences,
     onOpenFontPicker: (String, String) -> Unit,
@@ -88,7 +88,10 @@ fun CustomizePopup(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { onDismiss() },
+                .background(Color.Black.copy(alpha = 0.3f))
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onDismiss() })
+                },
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -546,7 +549,7 @@ private fun ScrollerSection(
 // --- Micro UI Controller Components ---
 
 @Composable
-fun PopupSectionHeader(icon: ImageVector, title: String, accentColor: Color) {
+private fun PopupSectionHeader(icon: ImageVector, title: String, accentColor: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
@@ -561,7 +564,7 @@ fun PopupSectionHeader(icon: ImageVector, title: String, accentColor: Color) {
 }
 
 @Composable
-fun ColumnSelector(
+private fun ColumnSelector(
     currentColumns: Int,
     options: List<Int>,
     accentColor: Color,
@@ -595,7 +598,7 @@ fun ColumnSelector(
 }
 
 @Composable
-fun PopupSlider(
+private fun PopupSlider(
     label: String,
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
@@ -630,7 +633,7 @@ fun PopupSlider(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PopupDropdown(
+private fun PopupDropdown(
     label: String,
     currentSelection: String,
     options: Map<String, String>,
@@ -678,7 +681,7 @@ fun PopupDropdown(
 }
 
 @Composable
-fun PopupToggle(title: String, checked: Boolean, contentColor: Color, onCheckedChange: (Boolean) -> Unit) {
+private fun PopupToggle(title: String, checked: Boolean, contentColor: Color, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
