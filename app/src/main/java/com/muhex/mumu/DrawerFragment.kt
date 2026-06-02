@@ -11,9 +11,12 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -128,8 +131,23 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
     // endregion
 
     // region Compose UI Setup
-    private fun setupSettingsCompose() {
-        binding.drawerSettingsCompose.setContent {
+    @Composable
+    private fun DrawerComposeContent() {
+        MaterialTheme(
+            colorScheme = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+                darkColorScheme(
+                    primary = Color(0xFF64B5F6), // Consistent blue accent
+                    surface = Color(0xFF0F0F0F),
+                    onSurface = Color.White
+                )
+            } else {
+                lightColorScheme(
+                    primary = Color(0xFF2196F3),
+                    surface = Color(0xFFF8F9FA),
+                    onSurface = Color.Black
+                )
+            }
+        ) {
             UnifiedSettingsSheet(
                 repository = repository,
                 prefs = prefs,
@@ -150,7 +168,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
             ClockSettingsSheet(
                 prefs = prefs,
                 isVisible = isClockSettingsVisible,
-                onOpenFontPicker = {  key, title -> showFontPicker(key, title, from = "clock") },
+                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "clock") },
                 onDismiss = { hideClockSettings() }
             )
 
@@ -161,6 +179,16 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
                 isVisible = isFontSettingsVisible,
                 onDismiss = { handleFontPickerDismiss() }
             )
+        }
+    }
+
+    private fun setupSettingsCompose() {
+        binding.drawerSettingsCompose.apply {
+            // Ensure background is transparent so Compose Surface can handle the shape and theme colors
+            setBackgroundColor(0x00000000)
+            setContent {
+                DrawerComposeContent()
+            }
         }
     }
 
@@ -472,7 +500,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
         val drawerKeys = setOf(
             "drawer_columns", "drawer_opacity", "drawer_item_opacity",
-            "drawer_display_mode", "drawer_icon_size", "drawer_label_size", "drawer_font_family"
+            "drawer_display_mode", "drawer_icon_size", "drawer_label_size", "drawer_font_family",
+            "drawer_top_padding", "drawer_bottom_padding"
         )
         val scrollerKeys = setOf(
             "scroller_padding", "scroller_bending", "scroller_spread",
