@@ -3,10 +3,8 @@ package com.muhex.mumu
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,13 +14,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -30,6 +33,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlin.math.roundToInt
 
+/**
+ * CustomizePopup: A central overlay for managing drawer-specific UI settings.
+ * Handles grid layouts, typography, icons, motion transitions, and the advanced scroller.
+ */
 @Composable
 fun CustomizePopup(
     isVisible: Boolean,
@@ -41,12 +48,13 @@ fun CustomizePopup(
 
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
+    val density = LocalDensity.current
+    val screenHeightPx = with(density) { screenHeight.toPx() }
 
-    // Gestures and physics
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    val animatedOffsetY by animateFloatAsState(targetValue = offsetY, label = "PopupOffset")
+    var verticalOffset by remember { mutableFloatStateOf(0f) }
 
-    // --- State Initialization from SharedPreferences ---
+    // --- Drawer State ---
+    // (These are synced with SharedPreferences, so remember is fine as they're re-read on recomposition/re-init)
     var drawerOpacity by remember { mutableIntStateOf(prefs.getInt("drawer_opacity", 85)) }
     var drawerItemOpacity by remember { mutableIntStateOf(prefs.getInt("drawer_item_opacity", 100)) }
     var drawerDisplayMode by remember { mutableStateOf(prefs.getString("drawer_display_mode", "both") ?: "both") }
@@ -55,9 +63,9 @@ fun CustomizePopup(
     var drawerOpenAnim by remember { mutableStateOf(prefs.getString("drawer_open_anim", "fade") ?: "fade") }
     var drawerCloseAnim by remember { mutableStateOf(prefs.getString("drawer_close_anim", "fade") ?: "fade") }
     var drawerColumns by remember { mutableIntStateOf(prefs.getInt("drawer_columns", 4)) }
-    var isScrollerExpanded by remember { mutableStateOf(false) }
 
-    // Scroller settings
+    // --- Scroller State ---
+    var isScrollerExpanded by rememberSaveable { mutableStateOf(false) }
     var scrollerPadding by remember { mutableFloatStateOf(prefs.getFloat("scroller_padding", 0.12f)) }
     var scrollerBending by remember { mutableFloatStateOf(prefs.getFloat("scroller_bending", 300f)) }
     var scrollerSpread by remember { mutableFloatStateOf(prefs.getFloat("scroller_spread", 7.5f)) }
@@ -66,11 +74,7 @@ fun CustomizePopup(
     var scrollerAnimDuration by remember { mutableIntStateOf(prefs.getInt("scroller_anim_duration", 250)) }
     var scrollerHaptic by remember { mutableStateOf(prefs.getBoolean("scroller_haptic", true)) }
 
-    // Constant Mappings
-    val animationOptions = mapOf("fade" to "Fade", "slide_up" to "Slide Up", "slide_down" to "Slide Down", "scale" to "Scale", "circle" to "Circle Reveal", "none" to "None")
-    val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
-
-    // Theme detection
+    // --- UI Theme Helpers ---
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) Color(0xFF0F0F0F) else Color(0xFFF8F9FA)
     val contentColor = if (isDark) Color.White else Color.Black
@@ -89,306 +93,157 @@ fun CustomizePopup(
         ) {
             Surface(
                 modifier = Modifier
-                    .offset { IntOffset(0, animatedOffsetY.roundToInt()) }
-                    .widthIn(max = 600.dp) // Responsive max width for tablets/large screens
-                    .fillMaxWidth(0.9f) // Comfortable width on most phones
-                    .heightIn(max = screenHeight * 0.8f) // Dynamic height limit
-                    .wrapContentHeight() // Adapt to content size
+                    .widthIn(max = 600.dp)
+                    .fillMaxWidth(0.8f)
+                    .heightIn(max = screenHeight * 0.6f)
+                    .wrapContentHeight()
+                    .offset { IntOffset(0, verticalOffset.roundToInt()) }
                     .clickable(enabled = false) {},
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 32.dp, bottomEnd = 32.dp),
                 color = backgroundColor,
                 contentColor = contentColor,
-                tonalElevation = 12.dp
+                tonalElevation = 16.dp
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-
-                    // Interactive Drag Handle Section
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .pointerInput(Unit) {
-                                detectVerticalDragGestures(
-                                    onDragEnd = { offsetY = 0f },
-                                    onDragCancel = { offsetY = 0f },
-                                    onVerticalDrag = { change, dragAmount ->
-                                        change.consume()
-                                        offsetY += dragAmount
-                                    }
-                                )
-                            }
-                            .padding(top = 14.dp, bottom = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(5.dp)
-                                .clip(CircleShape)
-                                .background(contentColor.copy(alpha = 0.2f))
-                        )
-                    }
-
-                    // Title Header
-                    Text(
-                        text = "Customize Launcher",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = contentColor,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // 1. Drag Handle & Header
+                    HeaderSection(
+                        contentColor = contentColor,
+                        onReset = { verticalOffset = 0f },
+                        onDrag = { dragAmount ->
+                            verticalOffset = (verticalOffset + dragAmount).coerceIn(-screenHeightPx * 0.4f, screenHeightPx * 0.4f)
+                        }
                     )
 
-                    // Scrollable Config Area
+                    // 2. Main Scrollable Content
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 32.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-
-                        // SECTION: Grid Layout
                         item {
-                            PopupSectionHeader(Icons.Default.GridView, "Grid Layout", accentColor)
-                            Spacer(Modifier.height(10.dp))
-
-                            ColumnSelector(
-                                currentColumns = drawerColumns,
-                                options = listOf(1, 2, 3, 4, 5),
-                                accentColor = accentColor,
-                                contentColor = contentColor
-                            ) { selectedCol ->
-                                drawerColumns = selectedCol
-                                prefs.edit { putInt("drawer_columns", selectedCol) }
-                            }
-
-                            Spacer(Modifier.height(12.dp))
-
-                            PopupSlider(
-                                label = "Background Opacity",
-                                value = drawerOpacity.toFloat(),
-                                valueRange = 0f..100f,
-                                valueSuffix = "%",
-                                subTextColor = subTextColor,
-                                accentColor = accentColor,
-                                onValueChange = {
-                                    drawerOpacity = it.toInt()
-                                    prefs.edit { putInt("drawer_opacity", it.toInt()) }
-                                }
+                            Text(
+                                text = "Customize Launcher",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = contentColor
                             )
+                        }
 
-                            PopupSlider(
-                                label = "Item Transparency",
-                                value = drawerItemOpacity.toFloat(),
-                                valueRange = 10f..100f,
-                                valueSuffix = "%",
-                                subTextColor = subTextColor,
+                        // Grid Settings
+                        item {
+                            GridLayoutSection(
+                                columns = drawerColumns,
+                                opacity = drawerOpacity,
+                                itemOpacity = drawerItemOpacity,
                                 accentColor = accentColor,
-                                onValueChange = {
-                                    drawerItemOpacity = it.toInt()
-                                    prefs.edit { putInt("drawer_item_opacity", it.toInt()) }
+                                contentColor = contentColor,
+                                subTextColor = subTextColor,
+                                onColumnsChange = {
+                                    drawerColumns = it
+                                    prefs.edit { putInt("drawer_columns", it) }
+                                },
+                                onOpacityChange = {
+                                    drawerOpacity = it
+                                    prefs.edit { putInt("drawer_opacity", it) }
+                                },
+                                onItemOpacityChange = {
+                                    drawerItemOpacity = it
+                                    prefs.edit { putInt("drawer_item_opacity", it) }
                                 }
                             )
                         }
 
-                        // SECTION: Typography & Icons
+                        // Typography & Icons
                         item {
-                            PopupSectionHeader(Icons.Default.TextFields, "Typography & Icons", accentColor)
-                            Spacer(Modifier.height(10.dp))
-
-                            PopupDropdown(
-                                label = "Display Mode",
-                                currentSelection = drawerDisplayMode,
-                                options = displayModeOptions,
+                            TypographySection(
+                                displayMode = drawerDisplayMode,
+                                iconSize = drawerIconSize,
+                                labelSize = drawerLabelSize,
+                                accentColor = accentColor,
+                                contentColor = contentColor,
                                 subTextColor = subTextColor,
-                                onOptionSelected = {
+                                onDisplayModeChange = {
                                     drawerDisplayMode = it
                                     prefs.edit { putString("drawer_display_mode", it) }
-                                }
-                            )
-
-                            PopupSlider(
-                                label = "Icon Size",
-                                value = drawerIconSize,
-                                valueRange = 24f..72f,
-                                valueSuffix = " dp",
-                                subTextColor = subTextColor,
-                                accentColor = accentColor,
-                                onValueChange = {
+                                },
+                                onIconSizeChange = {
                                     drawerIconSize = it
                                     prefs.edit { putFloat("drawer_icon_size", it) }
-                                }
-                            )
-
-                            PopupSlider(
-                                label = "Label Size",
-                                value = drawerLabelSize,
-                                valueRange = 8f..24f,
-                                valueSuffix = " sp",
-                                subTextColor = subTextColor,
-                                accentColor = accentColor,
-                                onValueChange = {
+                                },
+                                onLabelSizeChange = {
                                     drawerLabelSize = it
                                     prefs.edit { putFloat("drawer_label_size", it) }
-                                }
+                                },
+                                onOpenFontPicker = { onOpenFontPicker("drawer_font_family", "Drawer Font") }
                             )
-
-                            Spacer(Modifier.height(6.dp))
-                            Button(
-                                onClick = { onOpenFontPicker("drawer_font_family", "Drawer Font") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(44.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.12f)),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.FontDownload, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Select Custom Font", color = accentColor, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
-                            }
                         }
 
-                        // SECTION: Motion Effects
+                        // Transitions
                         item {
-                            PopupSectionHeader(Icons.Default.AutoMode, "Motion Effects", accentColor)
-                            Spacer(Modifier.height(10.dp))
-
-                            PopupDropdown(
-                                label = "Enter Transition",
-                                currentSelection = drawerOpenAnim,
-                                options = animationOptions,
+                            TransitionsSection(
+                                openAnim = drawerOpenAnim,
+                                closeAnim = drawerCloseAnim,
+                                accentColor = accentColor,
                                 subTextColor = subTextColor,
-                                onOptionSelected = {
+                                onOpenAnimChange = {
                                     drawerOpenAnim = it
                                     prefs.edit { putString("drawer_open_anim", it) }
-                                }
-                            )
-
-                            PopupDropdown(
-                                label = "Exit Transition",
-                                currentSelection = drawerCloseAnim,
-                                options = animationOptions,
-                                subTextColor = subTextColor,
-                                onOptionSelected = {
+                                },
+                                onCloseAnimChange = {
                                     drawerCloseAnim = it
                                     prefs.edit { putString("drawer_close_anim", it) }
                                 }
                             )
                         }
 
-                        // SECTION: Advanced Scroller
+                        // Advanced Scroller
                         item {
-                            Column {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { isScrollerExpanded = !isScrollerExpanded }
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    PopupSectionHeader(Icons.Default.SortByAlpha, "Advanced Curved Scroller", accentColor)
-                                    Spacer(Modifier.weight(1f))
-                                    Icon(
-                                        imageVector = if (isScrollerExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                        contentDescription = null,
-                                        tint = contentColor.copy(alpha = 0.4f)
-                                    )
+                            ScrollerSection(
+                                isExpanded = isScrollerExpanded,
+                                padding = scrollerPadding,
+                                bending = scrollerBending,
+                                spread = scrollerSpread,
+                                textSize = scrollerTextSize,
+                                scale = scrollerScale,
+                                duration = scrollerAnimDuration,
+                                haptic = scrollerHaptic,
+                                accentColor = accentColor,
+                                contentColor = contentColor,
+                                subTextColor = subTextColor,
+                                onToggleExpand = { isScrollerExpanded = !isScrollerExpanded },
+                                onPaddingChange = {
+                                    scrollerPadding = it
+                                    prefs.edit { putFloat("scroller_padding", it) }
+                                },
+                                onBendingChange = {
+                                    scrollerBending = it
+                                    prefs.edit { putFloat("scroller_bending", it) }
+                                },
+                                onSpreadChange = {
+                                    scrollerSpread = it
+                                    prefs.edit { putFloat("scroller_spread", it) }
+                                },
+                                onTextSizeChange = {
+                                    scrollerTextSize = it
+                                    prefs.edit { putFloat("scroller_text_size", it) }
+                                },
+                                onScaleChange = {
+                                    scrollerScale = it
+                                    prefs.edit { putFloat("scroller_scale", it) }
+                                },
+                                onDurationChange = {
+                                    scrollerAnimDuration = it
+                                    prefs.edit { putInt("scroller_anim_duration", it) }
+                                },
+                                onHapticChange = {
+                                    scrollerHaptic = it
+                                    prefs.edit { putBoolean("scroller_haptic", it) }
                                 }
-
-                                AnimatedVisibility(visible = isScrollerExpanded) {
-                                    Column(
-                                        modifier = Modifier.padding(top = 10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                                    ) {
-                                        PopupSlider(
-                                            label = "Edge Offset",
-                                            value = scrollerPadding,
-                                            valueRange = 0.05f..0.4f,
-                                            isDecimal = true,
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerPadding = it
-                                                prefs.edit { putFloat("scroller_padding", it) }
-                                            }
-                                        )
-
-                                        PopupSlider(
-                                            label = "Curve Intensity",
-                                            value = scrollerBending,
-                                            valueRange = 0f..800f,
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerBending = it
-                                                prefs.edit { putFloat("scroller_bending", it) }
-                                            }
-                                        )
-
-                                        PopupSlider(
-                                            label = "Spread Scale",
-                                            value = scrollerSpread,
-                                            valueRange = 1f..25f,
-                                            isDecimal = true,
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerSpread = it
-                                                prefs.edit { putFloat("scroller_spread", it) }
-                                            }
-                                        )
-
-                                        PopupSlider(
-                                            label = "Scroller Text Size",
-                                            value = scrollerTextSize,
-                                            valueRange = 8f..64f,
-                                            valueSuffix = " sp",
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerTextSize = it
-                                                prefs.edit { putFloat("scroller_text_size", it) }
-                                            }
-                                        )
-
-                                        PopupSlider(
-                                            label = "Active Magnification",
-                                            value = scrollerScale,
-                                            valueRange = 1.0f..5.0f,
-                                            isDecimal = true,
-                                            valueSuffix = "x",
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerScale = it
-                                                prefs.edit { putFloat("scroller_scale", it) }
-                                            }
-                                        )
-
-                                        PopupSlider(
-                                            label = "Animation Duration",
-                                            value = scrollerAnimDuration.toFloat(),
-                                            valueRange = 50f..1000f,
-                                            valueSuffix = " ms",
-                                            subTextColor = subTextColor,
-                                            accentColor = accentColor,
-                                            onValueChange = {
-                                                scrollerAnimDuration = it.toInt()
-                                                prefs.edit { putInt("scroller_anim_duration", it.toInt()) }
-                                            }
-                                        )
-
-                                        PopupToggle(
-                                            title = "Haptic Response Feedback",
-                                            checked = scrollerHaptic,
-                                            contentColor = contentColor,
-                                            onCheckedChange = {
-                                                scrollerHaptic = it
-                                                prefs.edit { putBoolean("scroller_haptic", it) }
-                                            }
-                                        )
-                                    }
-                                }
-                            }
+                            )
                         }
 
+                        // Bottom Spacer
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
                 }
             }
@@ -396,43 +251,343 @@ fun CustomizePopup(
     }
 }
 
-// --- Micro UI Controller Components Built for Dialog Layouts ---
+// --- Section Composables ---
 
 @Composable
-fun PopupSectionHeader(icon: ImageVector, title: String, accentColor: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 8.dp)
+private fun HeaderSection(contentColor: Color, onReset: () -> Unit, onDrag: (Float) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount -> onDrag(dragAmount) }
+                )
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = { onReset() }
+                )
+            }
+            .padding(top = 16.dp, bottom = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text = title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = accentColor)
+        Box(
+            modifier = Modifier
+                .width(40.dp)
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(contentColor.copy(alpha = 0.3f))
+        )
     }
 }
 
 @Composable
-fun ColumnSelector(currentColumns: Int, options: List<Int>, accentColor: Color, contentColor: Color, onSelected: (Int) -> Unit) {
+private fun GridLayoutSection(
+    columns: Int,
+    opacity: Int,
+    itemOpacity: Int,
+    accentColor: Color,
+    contentColor: Color,
+    subTextColor: Color,
+    onColumnsChange: (Int) -> Unit,
+    onOpacityChange: (Int) -> Unit,
+    onItemOpacityChange: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        PopupSectionHeader(Icons.Default.GridView, "Grid Layout", accentColor)
+        
+        ColumnSelector(
+            currentColumns = columns,
+            options = listOf(1, 2, 3, 4, 5),
+            accentColor = accentColor,
+            contentColor = contentColor,
+            onSelected = onColumnsChange
+        )
+
+        PopupSlider(
+            label = "Background Opacity",
+            value = opacity.toFloat(),
+            valueRange = 0f..100f,
+            valueSuffix = "%",
+            subTextColor = subTextColor,
+            accentColor = accentColor,
+            onValueChange = { onOpacityChange(it.toInt()) }
+        )
+
+        PopupSlider(
+            label = "Item Transparency",
+            value = itemOpacity.toFloat(),
+            valueRange = 10f..100f,
+            valueSuffix = "%",
+            subTextColor = subTextColor,
+            accentColor = accentColor,
+            onValueChange = { onItemOpacityChange(it.toInt()) }
+        )
+    }
+}
+
+@Composable
+private fun TypographySection(
+    displayMode: String,
+    iconSize: Float,
+    labelSize: Float,
+    accentColor: Color,
+    contentColor: Color,
+    subTextColor: Color,
+    onDisplayModeChange: (String) -> Unit,
+    onIconSizeChange: (Float) -> Unit,
+    onLabelSizeChange: (Float) -> Unit,
+    onOpenFontPicker: () -> Unit
+) {
+    val displayModeOptions = mapOf(
+        "both" to "Icon & Label",
+        "icon" to "Icon Only",
+        "label" to "Label Only"
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        PopupSectionHeader(Icons.Default.TextFields, "Typography & Icons", accentColor)
+
+        PopupDropdown(
+            label = "Display Mode",
+            currentSelection = displayMode,
+            options = displayModeOptions,
+            subTextColor = subTextColor,
+            onOptionSelected = onDisplayModeChange
+        )
+
+        PopupSlider(
+            label = "Icon Size",
+            value = iconSize,
+            valueRange = 24f..72f,
+            valueSuffix = " dp",
+            subTextColor = subTextColor,
+            accentColor = accentColor,
+            onValueChange = onIconSizeChange
+        )
+
+        PopupSlider(
+            label = "Label Size",
+            value = labelSize,
+            valueRange = 8f..24f,
+            valueSuffix = " sp",
+            subTextColor = subTextColor,
+            accentColor = accentColor,
+            onValueChange = onLabelSizeChange
+        )
+
+        Button(
+            onClick = onOpenFontPicker,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.1f)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(Icons.Default.FontDownload, contentDescription = null, tint = accentColor, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
+            Text("Change Font Style", color = accentColor, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun TransitionsSection(
+    openAnim: String,
+    closeAnim: String,
+    accentColor: Color,
+    subTextColor: Color,
+    onOpenAnimChange: (String) -> Unit,
+    onCloseAnimChange: (String) -> Unit
+) {
+    val animationOptions = mapOf(
+        "fade" to "Fade",
+        "slide_up" to "Slide Up",
+        "slide_down" to "Slide Down",
+        "scale" to "Scale",
+        "circle" to "Circle Reveal",
+        "none" to "None"
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        PopupSectionHeader(Icons.Default.AutoMode, "Motion Effects", accentColor)
+
+        PopupDropdown(
+            label = "Open Transition",
+            currentSelection = openAnim,
+            options = animationOptions,
+            subTextColor = subTextColor,
+            onOptionSelected = onOpenAnimChange
+        )
+
+        PopupDropdown(
+            label = "Close Transition",
+            currentSelection = closeAnim,
+            options = animationOptions,
+            subTextColor = subTextColor,
+            onOptionSelected = onCloseAnimChange
+        )
+    }
+}
+
+@Composable
+private fun ScrollerSection(
+    isExpanded: Boolean,
+    padding: Float,
+    bending: Float,
+    spread: Float,
+    textSize: Float,
+    scale: Float,
+    duration: Int,
+    haptic: Boolean,
+    accentColor: Color,
+    contentColor: Color,
+    subTextColor: Color,
+    onToggleExpand: () -> Unit,
+    onPaddingChange: (Float) -> Unit,
+    onBendingChange: (Float) -> Unit,
+    onSpreadChange: (Float) -> Unit,
+    onTextSizeChange: (Float) -> Unit,
+    onScaleChange: (Float) -> Unit,
+    onDurationChange: (Int) -> Unit,
+    onHapticChange: (Boolean) -> Unit
+) {
     Column {
-        Text("Grid Columns", style = MaterialTheme.typography.bodySmall, color = contentColor.copy(alpha = 0.6f))
-        Spacer(Modifier.height(6.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleExpand() }
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PopupSectionHeader(Icons.Default.SortByAlpha, "Advanced Scroller", accentColor)
+            Spacer(Modifier.weight(1f))
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = subTextColor
+            )
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                PopupSlider(
+                    label = "Edge Offset",
+                    value = padding,
+                    valueRange = 0.05f..0.4f,
+                    isDecimal = true,
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = onPaddingChange
+                )
+
+                PopupSlider(
+                    label = "Curve Intensity",
+                    value = bending,
+                    valueRange = 0f..800f,
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = onBendingChange
+                )
+
+                PopupSlider(
+                    label = "Spread Scale",
+                    value = spread,
+                    valueRange = 1f..25f,
+                    isDecimal = true,
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = onSpreadChange
+                )
+
+                PopupSlider(
+                    label = "Scroller Text Size",
+                    value = textSize,
+                    valueRange = 8f..64f,
+                    valueSuffix = " sp",
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = onTextSizeChange
+                )
+
+                PopupSlider(
+                    label = "Active Magnification",
+                    value = scale,
+                    valueRange = 1.0f..5.0f,
+                    isDecimal = true,
+                    valueSuffix = "x",
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = onScaleChange
+                )
+
+                PopupSlider(
+                    label = "Animation Duration",
+                    value = duration.toFloat(),
+                    valueRange = 50f..1000f,
+                    valueSuffix = " ms",
+                    subTextColor = subTextColor,
+                    accentColor = accentColor,
+                    onValueChange = { onDurationChange(it.toInt()) }
+                )
+
+                PopupToggle(
+                    title = "Haptic Feedback",
+                    checked = haptic,
+                    contentColor = contentColor,
+                    onCheckedChange = onHapticChange
+                )
+            }
+        }
+    }
+}
+
+// --- Micro UI Controller Components ---
+
+@Composable
+fun PopupSectionHeader(icon: ImageVector, title: String, accentColor: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.sp,
+            color = accentColor
+        )
+    }
+}
+
+@Composable
+fun ColumnSelector(
+    currentColumns: Int,
+    options: List<Int>,
+    accentColor: Color,
+    contentColor: Color,
+    onSelected: (Int) -> Unit
+) {
+    Column {
+        Text("Grid Columns", style = MaterialTheme.typography.labelSmall, color = contentColor.copy(alpha = 0.5f))
+        Spacer(Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             options.forEach { col ->
                 val isSelected = currentColumns == col
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) accentColor else contentColor.copy(alpha = 0.05f))
-                        .clickable { onSelected(col) }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) accentColor else contentColor.copy(alpha = 0.05f),
+                    onClick = { onSelected(col) }
                 ) {
-                    Text(
-                        text = "$col",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else contentColor
-                    )
+                    Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "$col",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White else contentColor
+                        )
+                    }
                 }
             }
         }
@@ -450,7 +605,7 @@ fun PopupSlider(
     accentColor: Color,
     onValueChange: (Float) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
             Text(
@@ -466,9 +621,9 @@ fun PopupSlider(
             valueRange = valueRange,
             colors = SliderDefaults.colors(
                 thumbColor = accentColor,
-                activeTrackColor = accentColor
-            ),
-            modifier = Modifier.height(28.dp)
+                activeTrackColor = accentColor,
+                inactiveTrackColor = accentColor.copy(alpha = 0.1f)
+            )
         )
     }
 }
@@ -484,9 +639,9 @@ fun PopupDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -496,10 +651,13 @@ fun PopupDropdown(
                 value = options[currentSelection] ?: currentSelection,
                 onValueChange = {},
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    unfocusedBorderColor = subTextColor.copy(alpha = 0.2f)
+                ),
                 textStyle = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth().menuAnchor(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -522,9 +680,7 @@ fun PopupDropdown(
 @Composable
 fun PopupToggle(title: String, checked: Boolean, contentColor: Color, onCheckedChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -142,12 +142,18 @@ fun FontSettings(
 
     val offset = remember { Animatable(screenHeightPx) }
 
+    var wasVisible by remember { mutableStateOf(false) }
+
     LaunchedEffect(isVisible) {
         if (isVisible) {
+            wasVisible = true
             refreshFonts()
             offset.animateTo(screenHeightPx * 0.1f, spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow))
-        } else {
-            offset.animateTo(screenHeightPx, tween(400, easing = FastOutSlowInEasing))
+        } else if (wasVisible) {
+            wasVisible = false
+            if (offset.value < screenHeightPx) {
+                offset.animateTo(screenHeightPx, tween(400, easing = FastOutSlowInEasing))
+            }
             onDismissFinished()
         }
     }
