@@ -142,6 +142,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
             CustomizePopup(
                 isVisible = isCustomizeVisible,
+                prefs = prefs,
+                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "customize") },
                 onDismiss = { hideCustomize() }
             )
 
