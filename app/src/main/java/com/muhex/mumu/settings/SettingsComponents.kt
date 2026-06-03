@@ -404,7 +404,7 @@ fun AppSelectionContent(
                     ) {
                         Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                             Image(
-                                painter = rememberAsyncImagePainter(app.icon),
+                                painter = rememberAsyncImagePainter(app),
                                 contentDescription = null,
                                 modifier = Modifier.size(40.dp)
                             )
@@ -440,10 +440,10 @@ fun AppSelectionContent(
 fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.typography.labelLarge.copy(
-            color = Color(0xFF4CAF50),
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
+        style = MaterialTheme.typography.labelMedium.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.2.sp
         ),
         modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp)
     )

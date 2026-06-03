@@ -236,20 +236,16 @@ class AppRepository private constructor(context: Context) {
         val profiles = launcherApps.profiles
         val updateTimestamp = if (forceRefresh) System.currentTimeMillis() else 0L
 
-        val allApps = coroutineScope {
-            profiles.flatMap { profile ->
-                launcherApps.getActivityList(null, profile).map { ri ->
-                    async {
-                        AppModel(
-                            label = ri.label.toString(),
-                            packageName = ri.applicationInfo.packageName,
-                            icon = ri.getIcon(0),
-                            userHandle = profile,
-                            lastUpdated = updateTimestamp
-                        )
-                    }
-                }
-            }.awaitAll()
+        val allApps = profiles.flatMap { profile ->
+            launcherApps.getActivityList(null, profile).map { ri ->
+                AppModel(
+                    label = ri.label.toString(),
+                    packageName = ri.applicationInfo.packageName,
+                    className = ri.name,
+                    userHandle = profile,
+                    lastUpdated = updateTimestamp
+                )
+            }
         }
 
         val sortedList = allApps.sortedBy { it.label.lowercase() }

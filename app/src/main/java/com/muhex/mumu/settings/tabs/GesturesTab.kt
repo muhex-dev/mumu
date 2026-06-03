@@ -86,7 +86,7 @@ fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, contentColo
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Image(
-                                    painter = rememberAsyncImagePainter(app.icon),
+                                    painter = rememberAsyncImagePainter(app),
                                     contentDescription = null,
                                     modifier = Modifier.size(32.dp)
                                 )
@@ -102,7 +102,7 @@ fun GesturesTab(repository: AppRepository, prefs: SharedPreferences, contentColo
             },
             confirmButton = {
                 TextButton(onClick = { selectingAppForKey = null }) {
-                    Text("Cancel", color = Color(0xFF4CAF50))
+                    Text("Cancel", color = contentColor)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface,

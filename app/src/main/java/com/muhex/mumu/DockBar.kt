@@ -359,7 +359,7 @@ private fun DockItemContent(
         }
         if (showIcon) {
             Image(
-                painter = rememberAsyncImagePainter(app.icon),
+                painter = rememberAsyncImagePainter(app),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize.dp)
             )
@@ -368,7 +368,7 @@ private fun DockItemContent(
         // Standard: Icon on left/top, Label on right/bottom
         if (showIcon) {
             Image(
-                painter = rememberAsyncImagePainter(app.icon),
+                painter = rememberAsyncImagePainter(app),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize.dp)
             )

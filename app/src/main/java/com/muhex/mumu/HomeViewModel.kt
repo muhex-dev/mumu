@@ -32,6 +32,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var fontPickerTargetKey by mutableStateOf("clock_font_family")
     var fontPickerTitle by mutableStateOf("Clock Font")
+    var fontPickerSource by mutableStateOf("")
 
     init {
         viewModelScope.launch {

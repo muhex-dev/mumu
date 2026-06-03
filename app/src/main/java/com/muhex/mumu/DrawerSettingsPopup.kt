@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -76,10 +77,10 @@ fun DrawerSettingsPopup(
 
     // --- UI Theme Helpers ---
     val isDark = isSystemInDarkTheme()
-    val backgroundColor = if (isDark) Color(0xFF0F0F0F) else Color(0xFFF8F9FA)
+    val backgroundColor = if (isDark) Color.Black else Color.White
     val contentColor = if (isDark) Color.White else Color.Black
-    val accentColor = MaterialTheme.colorScheme.primary
-    val subTextColor = contentColor.copy(alpha = 0.6f)
+    val accentColor = contentColor
+    val subTextColor = Color(0xFF888888)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -145,14 +146,10 @@ fun DrawerSettingsPopup(
                                     drawerColumns = it
                                     prefs.edit { putInt("drawer_columns", it) }
                                 },
-                                onOpacityChange = {
-                                    drawerOpacity = it
-                                    prefs.edit { putInt("drawer_opacity", it) }
-                                },
-                                onItemOpacityChange = {
-                                    drawerItemOpacity = it
-                                    prefs.edit { putInt("drawer_item_opacity", it) }
-                                }
+                                onOpacityChange = { drawerOpacity = it },
+                                onOpacityChangeFinished = { prefs.edit { putInt("drawer_opacity", drawerOpacity) } },
+                                onItemOpacityChange = { drawerItemOpacity = it },
+                                onItemOpacityChangeFinished = { prefs.edit { putInt("drawer_item_opacity", drawerItemOpacity) } }
                             )
                         }
 
@@ -169,14 +166,10 @@ fun DrawerSettingsPopup(
                                     drawerDisplayMode = it
                                     prefs.edit { putString("drawer_display_mode", it) }
                                 },
-                                onIconSizeChange = {
-                                    drawerIconSize = it
-                                    prefs.edit { putFloat("drawer_icon_size", it) }
-                                },
-                                onLabelSizeChange = {
-                                    drawerLabelSize = it
-                                    prefs.edit { putFloat("drawer_label_size", it) }
-                                },
+                                onIconSizeChange = { drawerIconSize = it },
+                                onIconSizeChangeFinished = { prefs.edit { putFloat("drawer_icon_size", drawerIconSize) } },
+                                onLabelSizeChange = { drawerLabelSize = it },
+                                onLabelSizeChangeFinished = { prefs.edit { putFloat("drawer_label_size", drawerLabelSize) } },
                                 onOpenFontPicker = { onOpenFontPicker("drawer_font_family", "Drawer Font") }
                             )
                         }
@@ -214,30 +207,18 @@ fun DrawerSettingsPopup(
                                 contentColor = contentColor,
                                 subTextColor = subTextColor,
                                 onToggleExpand = { isScrollerExpanded = !isScrollerExpanded },
-                                onPaddingChange = {
-                                    scrollerPadding = it
-                                    prefs.edit { putFloat("scroller_padding", it) }
-                                },
-                                onBendingChange = {
-                                    scrollerBending = it
-                                    prefs.edit { putFloat("scroller_bending", it) }
-                                },
-                                onSpreadChange = {
-                                    scrollerSpread = it
-                                    prefs.edit { putFloat("scroller_spread", it) }
-                                },
-                                onTextSizeChange = {
-                                    scrollerTextSize = it
-                                    prefs.edit { putFloat("scroller_text_size", it) }
-                                },
-                                onScaleChange = {
-                                    scrollerScale = it
-                                    prefs.edit { putFloat("scroller_scale", it) }
-                                },
-                                onDurationChange = {
-                                    scrollerAnimDuration = it
-                                    prefs.edit { putInt("scroller_anim_duration", it) }
-                                },
+                                onPaddingChange = { scrollerPadding = it },
+                                onPaddingChangeFinished = { prefs.edit { putFloat("scroller_padding", scrollerPadding) } },
+                                onBendingChange = { scrollerBending = it },
+                                onBendingChangeFinished = { prefs.edit { putFloat("scroller_bending", scrollerBending) } },
+                                onSpreadChange = { scrollerSpread = it },
+                                onSpreadChangeFinished = { prefs.edit { putFloat("scroller_spread", scrollerSpread) } },
+                                onTextSizeChange = { scrollerTextSize = it },
+                                onTextSizeChangeFinished = { prefs.edit { putFloat("scroller_text_size", scrollerTextSize) } },
+                                onScaleChange = { scrollerScale = it },
+                                onScaleChangeFinished = { prefs.edit { putFloat("scroller_scale", scrollerScale) } },
+                                onDurationChange = { scrollerAnimDuration = it },
+                                onDurationChangeFinished = { prefs.edit { putInt("scroller_anim_duration", scrollerAnimDuration) } },
                                 onHapticChange = {
                                     scrollerHaptic = it
                                     prefs.edit { putBoolean("scroller_haptic", it) }
@@ -294,7 +275,9 @@ private fun GridLayoutSection(
     subTextColor: Color,
     onColumnsChange: (Int) -> Unit,
     onOpacityChange: (Int) -> Unit,
-    onItemOpacityChange: (Int) -> Unit
+    onOpacityChangeFinished: () -> Unit,
+    onItemOpacityChange: (Int) -> Unit,
+    onItemOpacityChangeFinished: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         PopupSectionHeader(Icons.Default.GridView, "Grid Layout", accentColor)
@@ -314,7 +297,8 @@ private fun GridLayoutSection(
             valueSuffix = "%",
             subTextColor = subTextColor,
             accentColor = accentColor,
-            onValueChange = { onOpacityChange(it.toInt()) }
+            onValueChange = { onOpacityChange(it.toInt()) },
+            onValueChangeFinished = onOpacityChangeFinished
         )
 
         PopupSlider(
@@ -324,7 +308,8 @@ private fun GridLayoutSection(
             valueSuffix = "%",
             subTextColor = subTextColor,
             accentColor = accentColor,
-            onValueChange = { onItemOpacityChange(it.toInt()) }
+            onValueChange = { onItemOpacityChange(it.toInt()) },
+            onValueChangeFinished = onItemOpacityChangeFinished
         )
     }
 }
@@ -339,7 +324,9 @@ private fun TypographySection(
     subTextColor: Color,
     onDisplayModeChange: (String) -> Unit,
     onIconSizeChange: (Float) -> Unit,
+    onIconSizeChangeFinished: () -> Unit,
     onLabelSizeChange: (Float) -> Unit,
+    onLabelSizeChangeFinished: () -> Unit,
     onOpenFontPicker: () -> Unit
 ) {
     val displayModeOptions = mapOf(
@@ -351,11 +338,12 @@ private fun TypographySection(
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         PopupSectionHeader(Icons.Default.TextFields, "Typography & Icons", accentColor)
 
-        PopupDropdown(
+        PopupSegmentedControl(
             label = "Display Mode",
             currentSelection = displayMode,
             options = displayModeOptions,
             subTextColor = subTextColor,
+            accentColor = accentColor,
             onOptionSelected = onDisplayModeChange
         )
 
@@ -366,7 +354,8 @@ private fun TypographySection(
             valueSuffix = " dp",
             subTextColor = subTextColor,
             accentColor = accentColor,
-            onValueChange = onIconSizeChange
+            onValueChange = onIconSizeChange,
+            onValueChangeFinished = onIconSizeChangeFinished
         )
 
         PopupSlider(
@@ -376,7 +365,8 @@ private fun TypographySection(
             valueSuffix = " sp",
             subTextColor = subTextColor,
             accentColor = accentColor,
-            onValueChange = onLabelSizeChange
+            onValueChange = onLabelSizeChange,
+            onValueChangeFinished = onLabelSizeChangeFinished
         )
 
         Button(
@@ -403,29 +393,30 @@ private fun TransitionsSection(
 ) {
     val animationOptions = mapOf(
         "fade" to "Fade",
-        "slide_up" to "Slide Up",
-        "slide_down" to "Slide Down",
         "scale" to "Scale",
-        "circle" to "Circle Reveal",
+        "slide_up" to "Slide Up",
+        "circle" to "Circle",
         "none" to "None"
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         PopupSectionHeader(Icons.Default.AutoMode, "Motion Effects", accentColor)
 
-        PopupDropdown(
+        PopupSegmentedControl(
             label = "Open Transition",
             currentSelection = openAnim,
             options = animationOptions,
             subTextColor = subTextColor,
+            accentColor = accentColor,
             onOptionSelected = onOpenAnimChange
         )
 
-        PopupDropdown(
+        PopupSegmentedControl(
             label = "Close Transition",
             currentSelection = closeAnim,
             options = animationOptions,
             subTextColor = subTextColor,
+            accentColor = accentColor,
             onOptionSelected = onCloseAnimChange
         )
     }
@@ -446,11 +437,17 @@ private fun ScrollerSection(
     subTextColor: Color,
     onToggleExpand: () -> Unit,
     onPaddingChange: (Float) -> Unit,
+    onPaddingChangeFinished: () -> Unit,
     onBendingChange: (Float) -> Unit,
+    onBendingChangeFinished: () -> Unit,
     onSpreadChange: (Float) -> Unit,
+    onSpreadChangeFinished: () -> Unit,
     onTextSizeChange: (Float) -> Unit,
+    onTextSizeChangeFinished: () -> Unit,
     onScaleChange: (Float) -> Unit,
+    onScaleChangeFinished: () -> Unit,
     onDurationChange: (Int) -> Unit,
+    onDurationChangeFinished: () -> Unit,
     onHapticChange: (Boolean) -> Unit
 ) {
     Column {
@@ -482,7 +479,8 @@ private fun ScrollerSection(
                     isDecimal = true,
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = onPaddingChange
+                    onValueChange = onPaddingChange,
+                    onValueChangeFinished = onPaddingChangeFinished
                 )
 
                 PopupSlider(
@@ -491,7 +489,8 @@ private fun ScrollerSection(
                     valueRange = 0f..800f,
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = onBendingChange
+                    onValueChange = onBendingChange,
+                    onValueChangeFinished = onBendingChangeFinished
                 )
 
                 PopupSlider(
@@ -501,7 +500,8 @@ private fun ScrollerSection(
                     isDecimal = true,
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = onSpreadChange
+                    onValueChange = onSpreadChange,
+                    onValueChangeFinished = onSpreadChangeFinished
                 )
 
                 PopupSlider(
@@ -511,7 +511,8 @@ private fun ScrollerSection(
                     valueSuffix = " sp",
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = onTextSizeChange
+                    onValueChange = onTextSizeChange,
+                    onValueChangeFinished = onTextSizeChangeFinished
                 )
 
                 PopupSlider(
@@ -522,7 +523,8 @@ private fun ScrollerSection(
                     valueSuffix = "x",
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = onScaleChange
+                    onValueChange = onScaleChange,
+                    onValueChangeFinished = onScaleChangeFinished
                 )
 
                 PopupSlider(
@@ -532,7 +534,8 @@ private fun ScrollerSection(
                     valueSuffix = " ms",
                     subTextColor = subTextColor,
                     accentColor = accentColor,
-                    onValueChange = { onDurationChange(it.toInt()) }
+                    onValueChange = { onDurationChange(it.toInt()) },
+                    onValueChangeFinished = onDurationChangeFinished
                 )
 
                 PopupToggle(
@@ -580,7 +583,7 @@ private fun ColumnSelector(
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isSelected) accentColor else contentColor.copy(alpha = 0.05f),
+                    color = if (isSelected) accentColor else accentColor.copy(alpha = 0.05f),
                     onClick = { onSelected(col) }
                 ) {
                     Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
@@ -588,7 +591,7 @@ private fun ColumnSelector(
                             text = "$col",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.White else contentColor
+                            color = if (isSelected) (if (isSystemInDarkTheme()) Color.Black else Color.White) else contentColor
                         )
                     }
                 }
@@ -606,13 +609,14 @@ private fun PopupSlider(
     isDecimal: Boolean = false,
     subTextColor: Color,
     accentColor: Color,
-    onValueChange: (Float) -> Unit
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: (() -> Unit)? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
             Text(
-                text = if (isDecimal) String.format("%.2f", value) + valueSuffix else "${value.roundToInt()}$valueSuffix",
+                text = if (isDecimal) String.format(Locale.US, "%.2f", value) + valueSuffix else "${value.roundToInt()}$valueSuffix",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = accentColor
@@ -621,6 +625,7 @@ private fun PopupSlider(
         Slider(
             value = value,
             onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
             valueRange = valueRange,
             colors = SliderDefaults.colors(
                 thumbColor = accentColor,
@@ -631,57 +636,9 @@ private fun PopupSlider(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PopupDropdown(
-    label: String,
-    currentSelection: String,
-    options: Map<String, String>,
-    subTextColor: Color,
-    onOptionSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
-        Spacer(Modifier.height(8.dp))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                readOnly = true,
-                value = options[currentSelection] ?: currentSelection,
-                onValueChange = {},
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    unfocusedBorderColor = subTextColor.copy(alpha = 0.2f)
-                ),
-                textStyle = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth().menuAnchor(),
-                shape = RoundedCornerShape(16.dp)
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { (key, labelText) ->
-                    DropdownMenuItem(
-                        text = { Text(labelText, style = MaterialTheme.typography.bodyMedium) },
-                        onClick = {
-                            onOptionSelected(key)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun PopupToggle(title: String, checked: Boolean, contentColor: Color, onCheckedChange: (Boolean) -> Unit) {
+    val isDark = isSystemInDarkTheme()
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -690,7 +647,63 @@ private fun PopupToggle(title: String, checked: Boolean, contentColor: Color, on
         Text(title, style = MaterialTheme.typography.bodyMedium, color = contentColor)
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = if (isDark) Color.Black else Color.White,
+                checkedTrackColor = contentColor,
+                uncheckedThumbColor = contentColor.copy(alpha = 0.4f),
+                uncheckedTrackColor = contentColor.copy(alpha = 0.1f),
+                uncheckedBorderColor = Color.Transparent
+            )
         )
+    }
+}
+
+@Composable
+private fun PopupSegmentedControl(
+    label: String,
+    currentSelection: String,
+    options: Map<String, String>,
+    subTextColor: Color,
+    accentColor: Color,
+    onOptionSelected: (String) -> Unit
+) {
+    val isDark = isSystemInDarkTheme()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(accentColor.copy(alpha = 0.05f))
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEach { (key, value) ->
+                val isSelected = currentSelection == key
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) accentColor else Color.Transparent)
+                        .clickable { onOptionSelected(key) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                        color = if (isSelected) {
+                            if (isDark) Color.Black else Color.White
+                        } else {
+                            accentColor.copy(alpha = 0.6f)
+                        }
+                    )
+                }
+            }
+        }
     }
 }

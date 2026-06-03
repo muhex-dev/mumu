@@ -41,6 +41,7 @@ class HomeOverlayController(
     fun showFontPicker(key: String, title: String, source: String) {
         viewModel.fontPickerTargetKey = key
         viewModel.fontPickerTitle = title
+        viewModel.fontPickerSource = source
         if (source == "unified") viewModel.isUnifiedSettingsVisible = false
         if (source == "clock") viewModel.isClockSettingsVisible = false
         if (source == "dock") viewModel.isDockSettingsVisible = false
@@ -49,15 +50,21 @@ class HomeOverlayController(
 
     fun handleFontPickerDismiss() {
         viewModel.isFontSettingsVisible = false
-        when {
-            viewModel.fontPickerTargetKey.contains("clock") || viewModel.fontPickerTargetKey.contains("date") -> {
-                viewModel.isClockSettingsVisible = true
-            }
-            viewModel.fontPickerTargetKey.contains("dock") -> {
-                viewModel.isDockSettingsVisible = true
-            }
+        when (viewModel.fontPickerSource) {
+            "clock" -> viewModel.isClockSettingsVisible = true
+            "dock" -> viewModel.isDockSettingsVisible = true
+            "unified" -> viewModel.isUnifiedSettingsVisible = true
             else -> {
-                checkOverlayVisibility()
+                // Fallback to key-based logic if source is unknown
+                when {
+                    viewModel.fontPickerTargetKey.contains("clock") || viewModel.fontPickerTargetKey.contains("date") -> {
+                        viewModel.isClockSettingsVisible = true
+                    }
+                    viewModel.fontPickerTargetKey.contains("dock") -> {
+                        viewModel.isDockSettingsVisible = true
+                    }
+                    else -> checkOverlayVisibility()
+                }
             }
         }
     }

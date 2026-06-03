@@ -33,6 +33,7 @@ import kotlin.math.roundToInt
 sealed class HomePopupAction {
     object Wallpaper : HomePopupAction()
     object Muhex : HomePopupAction()
+    object AddWidget : HomePopupAction()
     object Settings : HomePopupAction()
     object Dock : HomePopupAction()
     object Dismiss : HomePopupAction()
@@ -48,9 +49,9 @@ fun HomePopup(
     onAction: (HomePopupAction) -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val backgroundColor = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.98f) else Color.White.copy(alpha = 0.98f)
+    val backgroundColor = if (isDark) Color.Black else Color.White
     val contentColor = if (isDark) Color.White else Color.Black
-    val iconBackground = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+    val iconBackground = contentColor.copy(alpha = 0.05f)
 
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -147,6 +148,14 @@ fun HomePopup(
                             contentColor = contentColor,
                             iconBackground = iconBackground,
                             onClick = { onAction(HomePopupAction.Muhex) }
+                        )
+                        HomeListItem(
+                            icon = Icons.Default.Widgets,
+                            label = "Add Widget",
+                            description = "System and custom widgets",
+                            contentColor = contentColor,
+                            iconBackground = iconBackground,
+                            onClick = { onAction(HomePopupAction.AddWidget) }
                         )
                         HomeListItem(
                             icon = Icons.Default.Layers,

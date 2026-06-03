@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.drawable.toBitmap
 import androidx.activity.compose.BackHandler
+import coil.compose.rememberAsyncImagePainter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -209,12 +210,11 @@ fun QuickMenu(
                                 recentApps.chunked(3).take(2).forEach { rowApps ->
                                     Row(modifier = Modifier.fillMaxWidth()) {
                                         rowApps.forEach { app ->
-                                            val iconBitmap = remember(app.icon) { app.icon.toBitmap().asImageBitmap() }
                                             Column(
                                                 modifier = Modifier.weight(1f).clickable { onAppClick(app); onAction(QuickMenuAction.Dismiss) }.padding(4.dp),
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
-                                                Image(bitmap = iconBitmap, contentDescription = null, modifier = Modifier.size(22.dp)) // Reduced icon size from 24dp
+                                                Image(painter = rememberAsyncImagePainter(app), contentDescription = null, modifier = Modifier.size(22.dp)) // Reduced icon size from 24dp
                                                 Text(app.label, color = contentColor, fontSize = 8.sp, maxLines = 1, textAlign = TextAlign.Center)
                                             }
                                         }
@@ -287,10 +287,9 @@ fun QuickMenu(
 
 @Composable
 private fun AppRealItem(letter: String, app: AppModel, color: Color, onClick: () -> Unit) {
-    val iconBitmap = remember(app.icon) { app.icon.toBitmap().asImageBitmap() }
     Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) { // Reduced vertical padding
         Text(letter, color = color.copy(alpha = 0.4f), fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(20.dp))
-        Image(bitmap = iconBitmap, contentDescription = null, modifier = Modifier.size(20.dp)) // Reduced from 22dp
+        Image(painter = rememberAsyncImagePainter(app), contentDescription = null, modifier = Modifier.size(20.dp)) // Reduced from 22dp
         Spacer(modifier = Modifier.width(10.dp))
         Text(app.label, color = color, fontSize = 11.sp, maxLines = 1)
     }

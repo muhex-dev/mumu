@@ -315,7 +315,7 @@ fun NowAppCard(
         ) {
             if (displayMode != "label") {
                 Image(
-                    painter = rememberAsyncImagePainter(app.icon), 
+                    painter = rememberAsyncImagePainter(app),
                     contentDescription = null, 
                     modifier = Modifier.size(iconSize.dp)
                 )

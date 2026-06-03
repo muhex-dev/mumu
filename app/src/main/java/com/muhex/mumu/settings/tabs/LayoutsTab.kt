@@ -23,7 +23,6 @@ fun LayoutsTab(prefs: SharedPreferences, contentColor: Color) {
     val layouts = listOf(
         UnifiedHomeItem("Clock View", "Top section with stylized clocks", Icons.Default.WatchLater, "clock_view_enabled"),
         UnifiedHomeItem("Pinned Stack", "Samsung-style app cards", Icons.Default.PushPin, "show_now_apps"),
-        UnifiedHomeItem("Fixed Dock", "Quick access bottom bar", Icons.Default.ViewAgenda, "show_dock_bar"),
         UnifiedHomeItem("Gestures", "System-wide gesture control", Icons.Default.TouchApp, "gestures_enabled"),
         UnifiedHomeItem("Inspiration", "Motivational quotes on home screen", Icons.Default.FormatQuote, "quotes_enabled")
     )

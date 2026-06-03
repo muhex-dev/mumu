@@ -130,7 +130,8 @@ class HomeFragment : Fragment() {
             onOpenWallpaper = {
                 val intent = Intent(Intent.ACTION_SET_WALLPAPER)
                 startActivity(Intent.createChooser(intent, "Select Wallpaper"))
-            }
+            },
+            onAddWidget = { launchWidgetPicker() }
         )
     }
 

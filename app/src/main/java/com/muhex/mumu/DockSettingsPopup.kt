@@ -73,6 +73,7 @@ fun DockSettingsPopup(
     var dockBgColor by remember { mutableIntStateOf(prefs.getInt("dock_bg_color", AndroidColor.WHITE)) }
     var dockBgAlpha by remember { mutableFloatStateOf(prefs.getFloat("dock_bg_alpha", 0.15f)) }
     var dockTextColor by remember { mutableIntStateOf(prefs.getInt("dock_text_color", AndroidColor.WHITE)) }
+    var showDockBar by remember { mutableStateOf(prefs.getBoolean("show_dock_bar", true)) }
 
     var isAppSelectionExpanded by rememberSaveable { mutableStateOf(false) }
     var isThemingExpanded by rememberSaveable { mutableStateOf(false) }
@@ -82,10 +83,10 @@ fun DockSettingsPopup(
 
     // --- UI Theme Helpers ---
     val isDark = isSystemInDarkTheme()
-    val backgroundColor = if (isDark) Color(0xFF0F0F0F) else Color(0xFFF8F9FA)
+    val backgroundColor = if (isDark) Color.Black else Color.White
     val contentColor = if (isDark) Color.White else Color.Black
-    val accentColor = MaterialTheme.colorScheme.primary
-    val subTextColor = contentColor.copy(alpha = 0.6f)
+    val accentColor = contentColor
+    val subTextColor = Color(0xFF888888)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -158,12 +159,44 @@ fun DockSettingsPopup(
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 PopupSectionHeader(Icons.Default.Settings, "Layout", accentColor)
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(accentColor.copy(alpha = 0.05f))
+                                        .clickable {
+                                            showDockBar = !showDockBar
+                                            prefs.edit { putBoolean("show_dock_bar", showDockBar) }
+                                        }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Visibility, null, tint = accentColor, modifier = Modifier.size(20.dp))
+                                    Spacer(Modifier.width(12.dp))
+                                    Text("Show Dock", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                                    Switch(
+                                        checked = showDockBar,
+                                        onCheckedChange = {
+                                            showDockBar = it
+                                            prefs.edit { putBoolean("show_dock_bar", it) }
+                                        },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = backgroundColor,
+                                            checkedTrackColor = accentColor,
+                                            uncheckedThumbColor = accentColor.copy(alpha = 0.4f),
+                                            uncheckedTrackColor = accentColor.copy(alpha = 0.1f),
+                                            uncheckedBorderColor = Color.Transparent
+                                        )
+                                    )
+                                }
                                 
-                                PopupDropdown(
+                                PopupSegmentedControl(
                                     label = "Orientation",
                                     currentSelection = orientation,
                                     options = mapOf("horizontal" to "Horizontal", "vertical" to "Vertical"),
                                     subTextColor = subTextColor,
+                                    accentColor = accentColor,
                                     onOptionSelected = {
                                         orientation = it
                                         val newAlign = if (it == "vertical") "row" else "column"
@@ -175,11 +208,12 @@ fun DockSettingsPopup(
                                 )
 
                                 if (orientation == "vertical") {
-                                    PopupDropdown(
+                                    PopupSegmentedControl(
                                         label = "Side Alignment",
                                         currentSelection = dockAlignment,
-                                        options = mapOf("left" to "Left Side", "right" to "Right Side"),
+                                        options = mapOf("left" to "Left", "right" to "Right"),
                                         subTextColor = subTextColor,
+                                        accentColor = accentColor,
                                         onOptionSelected = {
                                             dockAlignment = it
                                             prefs.edit { putString("dock_alignment", it) }
@@ -235,11 +269,12 @@ fun DockSettingsPopup(
                             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 PopupSectionHeader(Icons.Default.TextFields, "Content & Font", accentColor)
 
-                                PopupDropdown(
+                                PopupSegmentedControl(
                                     label = "Display Mode",
                                     currentSelection = dockDisplayMode,
-                                    options = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only"),
+                                    options = mapOf("both" to "Both", "icon" to "Icon", "label" to "Label"),
                                     subTextColor = subTextColor,
+                                    accentColor = accentColor,
                                     onOptionSelected = {
                                         dockDisplayMode = it
                                         prefs.edit { putString("dock_display_mode", it) }
@@ -518,47 +553,47 @@ private fun PopupSlider(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PopupDropdown(
+private fun PopupSegmentedControl(
     label: String,
     currentSelection: String,
     options: Map<String, String>,
     subTextColor: Color,
+    accentColor: Color,
     onOptionSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
+    val isDark = isSystemInDarkTheme()
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = subTextColor)
         Spacer(Modifier.height(8.dp))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(accentColor.copy(alpha = 0.05f))
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            OutlinedTextField(
-                readOnly = true,
-                value = options[currentSelection] ?: currentSelection,
-                onValueChange = {},
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    unfocusedBorderColor = subTextColor.copy(alpha = 0.2f)
-                ),
-                textStyle = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                shape = RoundedCornerShape(16.dp)
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { (key, labelText) ->
-                    DropdownMenuItem(
-                        text = { Text(labelText, style = MaterialTheme.typography.bodyMedium) },
-                        onClick = {
-                            onOptionSelected(key)
-                            expanded = false
+            options.forEach { (key, value) ->
+                val isSelected = currentSelection == key
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) accentColor else Color.Transparent)
+                        .clickable { onOptionSelected(key) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                        color = if (isSelected) {
+                            if (isDark) Color.Black else Color.White
+                        } else {
+                            accentColor.copy(alpha = 0.6f)
                         }
                     )
                 }
@@ -585,7 +620,7 @@ private fun ColorGrid(selectedColor: Int, onColorSelected: (Color) -> Unit) {
                                         .padding(2.dp)
                                         .background(color, CircleShape)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.3f))
+                                        .background(if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.4f))
                                 } else Modifier
                             ),
                         contentAlignment = Alignment.Center

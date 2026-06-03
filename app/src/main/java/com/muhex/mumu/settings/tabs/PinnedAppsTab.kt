@@ -30,7 +30,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
     var pinnedIds by remember { mutableStateOf(repository.getPinnedIds()) }
     val allApps = remember { mutableStateOf<List<AppModel>>(emptyList()) }
     val displayModeOptions = mapOf("both" to "Icon & Label", "icon" to "Icon Only", "label" to "Label Only")
-    val accentColor = Color(0xFF4CAF50)
+    val accentColor = contentColor
 
     var nowAppsVisibleCount   by remember { mutableIntStateOf(prefs.getInt("now_apps_visible_count", 3)) }
     var nowAppsVerticalOffset by remember { mutableFloatStateOf(prefs.getFloat("now_apps_vertical_offset", 0f)) }
@@ -106,7 +106,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                                         .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("$count", color = if (isSelected) Color.White else contentColor, fontWeight = FontWeight.Bold)
+                                    Text("$count", color = if (isSelected) backgroundColor else contentColor, fontWeight = FontWeight.Black)
                                 }
                             }
                         }
@@ -174,7 +174,7 @@ fun PinnedAppsTab(repository: AppRepository, prefs: SharedPreferences, contentCo
                     Button(
                         onClick = { onOpenFontPicker("now_apps_font_family", "Pinned Apps Font") },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.1f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor.copy(alpha = 0.05f)),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text("Change Font Family", color = accentColor, fontWeight = FontWeight.Bold)

@@ -12,7 +12,8 @@ class HomeActionHandler(
     private val activity: FragmentActivity,
     private val overlayController: HomeOverlayController,
     private val onOpenDrawer: (type: String, focusSearch: Boolean) -> Unit,
-    private val onOpenWallpaper: () -> Unit
+    private val onOpenWallpaper: () -> Unit,
+    private val onAddWidget: () -> Unit
 ) {
     private var isFlashlightOn = false
 
@@ -23,6 +24,10 @@ class HomeActionHandler(
                 onOpenWallpaper()
             }
             HomePopupAction.Muhex -> overlayController.showMuhexSettings()
+            HomePopupAction.AddWidget -> {
+                overlayController.dismissComposeOverlays()
+                onAddWidget()
+            }
             HomePopupAction.Dock -> overlayController.showDockSettings()
             HomePopupAction.Settings -> overlayController.showUnifiedSettings(tab = 0)
             HomePopupAction.Dismiss -> overlayController.dismissComposeOverlays()

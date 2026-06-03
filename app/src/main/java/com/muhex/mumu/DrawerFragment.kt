@@ -514,6 +514,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
         when {
             key in drawerKeys -> {
                 applyCurrentSettings()
+                // notifyDataSetChanged is expensive. Optimization: Use payload or specific update if only size/opacity changed.
+                // For now, still notifyDataSetChanged but it's triggered less often (onValueChangeFinished).
                 allAppsAdapter.notifyDataSetChanged()
             }
             key in scrollerKeys -> updateScrollerSettings()
