@@ -33,6 +33,8 @@ import com.muhex.mumu.settings.*
 import com.muhex.mumu.settings.tabs.*
 import androidx.compose.ui.platform.LocalContext
 
+import com.muhex.mumu.widgets.WidgetSlotModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnifiedSettingsSheet(

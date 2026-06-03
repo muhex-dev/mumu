@@ -1,4 +1,4 @@
-package com.muhex.mumu
+package com.muhex.mumu.widgets
 
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.muhex.mumu.holoBorder
 import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers

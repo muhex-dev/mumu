@@ -1,4 +1,4 @@
-package com.muhex.mumu
+package com.muhex.mumu.widgets
 
 import android.util.Log
 import android.view.GestureDetector

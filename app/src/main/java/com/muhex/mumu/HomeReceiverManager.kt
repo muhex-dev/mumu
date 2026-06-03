@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.BatteryManager
 import android.os.Build
+import com.muhex.mumu.widgets.WidgetPickerActivity
 
 class HomeReceiverManager(
     private val context: Context,

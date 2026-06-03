@@ -1,4 +1,4 @@
-package com.muhex.mumu
+package com.muhex.mumu.widgets
 
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView

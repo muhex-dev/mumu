@@ -17,6 +17,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.muhex.mumu.clock.ClockSettingsSheet
 import com.muhex.mumu.databinding.FragmentHomeBinding
+import com.muhex.mumu.widgets.WidgetHostManager
+import com.muhex.mumu.widgets.WidgetPickerActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -109,6 +111,8 @@ class HomeFragment : Fragment() {
             prefListener = prefListener,
             onBatteryChanged = { batteryPct ->
                 UIHelper.updateBatteryUI(topPagesManager.getAllPages(), batteryPct)
+                // Also update the standalone widget
+                com.muhex.mumu.widgets.MumuWidgetProvider.forceUpdateAll(requireContext())
             },
             onWidgetAdded = { widgetId, explicitIndex ->
                 topSectionController.handleWidgetAddition(widgetId, explicitIndex)

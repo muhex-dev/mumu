@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.muhex.mumu.databinding.FragmentHomeBinding
+import com.muhex.mumu.widgets.WidgetHostManager
+import com.muhex.mumu.widgets.WidgetSlotModel
+import com.muhex.mumu.widgets.WidgetStackScreen
 
 /**
  * TopSectionController
