@@ -63,6 +63,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation("androidx.documentfile:documentfile:1.1.0")
 
+    // Glance for Compose-based Widgets
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
+
     // Use Coil for smooth icon loading
     implementation("io.coil-kt:coil-compose:2.7.0")
 

@@ -112,7 +112,7 @@ class HomeFragment : Fragment() {
             onBatteryChanged = { batteryPct ->
                 UIHelper.updateBatteryUI(topPagesManager.getAllPages(), batteryPct)
                 // Also update the standalone widget
-                com.muhex.mumu.widgets.MumuWidgetProvider.forceUpdateAll(requireContext())
+                com.muhex.mumu.widgets.MumuGlanceWidget.forceUpdateAll(requireContext())
             },
             onWidgetAdded = { widgetId, explicitIndex ->
                 topSectionController.handleWidgetAddition(widgetId, explicitIndex)

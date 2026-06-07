@@ -36,7 +36,7 @@
         </service>
 
         <receiver
-            android:name=".widgets.MumuWidgetProvider"
+            android:name=".widgets.MumuWidgetReceiver"
             android:exported="true"
             android:label="Mumu Style Widget">
             <intent-filter>
@@ -45,6 +45,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/mumu_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.TodayWidgetReceiver"
+            android:exported="true"
+            android:label="Today Style Widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_widget_info" />
         </receiver>
 
         <receiver

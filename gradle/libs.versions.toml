@@ -5,6 +5,7 @@ kotlin = "2.1.0"
 # Android SDK
 coreKtx = "1.15.0"
 composeBom = "2024.12.01"
+glance = "1.1.1"
 
 # Other Libraries
 biometric = "1.2.0-alpha05"
@@ -27,6 +28,8 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 
 # Standard UI & Tools
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
