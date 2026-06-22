@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 
 /**
  * AppGridAdapter: A versatile adapter for displaying applications in a grid or list format.
@@ -71,35 +72,49 @@ class AppGridAdapter(
             val density = activity.resources.displayMetrics.density
             val iconSizePx = (iconSizeDp * density).toInt()
             
-            nameView?.text = app.label
-            nameView?.textSize = labelSizeSp
-            iconView?.setImageDrawable(app.icon)
+            if (nameView?.text != app.label) {
+                nameView?.text = app.label
+            }
+            if (nameView?.textSize != labelSizeSp) {
+                nameView?.textSize = labelSizeSp
+            }
+            
+            // Load icon lazily using Coil
+            iconView?.load(app) {
+                crossfade(true)
+            }
 
             // Apply Font
             val fontFamily = prefs.getString("drawer_font_family", "sans-serif-condensed") ?: "sans-serif-condensed"
-            nameView?.typeface = FontManager.resolveTypeface(fontFamily)
+            val targetTypeface = FontManager.resolveTypeface(fontFamily)
+            if (nameView?.typeface != targetTypeface) {
+                nameView?.typeface = targetTypeface
+            }
 
             // Apply icon size
             iconView?.layoutParams?.let { lp ->
-                lp.width = iconSizePx
-                lp.height = iconSizePx
-                iconView.layoutParams = lp
+                if (lp.width != iconSizePx || lp.height != iconSizePx) {
+                    lp.width = iconSizePx
+                    lp.height = iconSizePx
+                    iconView.layoutParams = lp
+                }
             }
 
             // Respect the display mode preference
-            when (displayMode) {
-                "icon" -> {
-                    iconView?.visibility = View.VISIBLE
-                    nameView?.visibility = View.GONE
-                }
-                "label" -> {
-                    iconView?.visibility = View.GONE
-                    nameView?.visibility = View.VISIBLE
-                }
-                else -> { // both
-                    iconView?.visibility = View.VISIBLE
-                    nameView?.visibility = View.VISIBLE
-                }
+            val targetIconVisibility = when (displayMode) {
+                "label" -> View.GONE
+                else -> View.VISIBLE
+            }
+            if (iconView?.visibility != targetIconVisibility) {
+                iconView?.visibility = targetIconVisibility
+            }
+
+            val targetNameVisibility = when (displayMode) {
+                "icon" -> View.GONE
+                else -> View.VISIBLE
+            }
+            if (nameView?.visibility != targetNameVisibility) {
+                nameView?.visibility = targetNameVisibility
             }
             
             applyItemAppearance()
@@ -122,8 +137,10 @@ class AppGridAdapter(
 
             val background = itemView.background?.mutate() as? GradientDrawable
             if (background != null) {
-                val alpha = (itemOpacity * 2.55).toInt().coerceIn(0, 255)
-                background.alpha = alpha
+                val targetAlpha = (itemOpacity * 2.55).toInt().coerceIn(0, 255)
+                if (background.alpha != targetAlpha) {
+                    background.alpha = targetAlpha
+                }
             }
         }
     }

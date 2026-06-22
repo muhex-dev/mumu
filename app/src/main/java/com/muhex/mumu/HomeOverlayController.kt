@@ -41,24 +41,39 @@ class HomeOverlayController(
     fun showFontPicker(key: String, title: String, source: String) {
         viewModel.fontPickerTargetKey = key
         viewModel.fontPickerTitle = title
+        viewModel.fontPickerSource = source
         if (source == "unified") viewModel.isUnifiedSettingsVisible = false
         if (source == "clock") viewModel.isClockSettingsVisible = false
+        if (source == "dock") viewModel.isDockSettingsVisible = false
         viewModel.isFontSettingsVisible = true
     }
 
     fun handleFontPickerDismiss() {
         viewModel.isFontSettingsVisible = false
-        if (viewModel.fontPickerTargetKey.contains("clock") || viewModel.fontPickerTargetKey.contains("date")) {
-            viewModel.isClockSettingsVisible = true
-        } else {
-            checkOverlayVisibility()
+        when (viewModel.fontPickerSource) {
+            "clock" -> viewModel.isClockSettingsVisible = true
+            "dock" -> viewModel.isDockSettingsVisible = true
+            "unified" -> viewModel.isUnifiedSettingsVisible = true
+            else -> {
+                // Fallback to key-based logic if source is unknown
+                when {
+                    viewModel.fontPickerTargetKey.contains("clock") || viewModel.fontPickerTargetKey.contains("date") -> {
+                        viewModel.isClockSettingsVisible = true
+                    }
+                    viewModel.fontPickerTargetKey.contains("dock") -> {
+                        viewModel.isDockSettingsVisible = true
+                    }
+                    else -> checkOverlayVisibility()
+                }
+            }
         }
     }
 
     fun checkOverlayVisibility() {
         if (!viewModel.isHomePopupVisible && !viewModel.isUnifiedSettingsVisible &&
             !viewModel.isClockSettingsVisible && !viewModel.isFontSettingsVisible &&
-            !viewModel.isMuhexSettingsVisible && !viewModel.isQuickMenuVisible) {
+            !viewModel.isMuhexSettingsVisible && !viewModel.isQuickMenuVisible &&
+            !viewModel.isDockSettingsVisible) {
             getComposeView().visibility = View.GONE
         }
     }
@@ -73,6 +88,12 @@ class HomeOverlayController(
         viewModel.isHomePopupVisible = false
         viewModel.unifiedSettingsInitialTab = tab
         viewModel.isUnifiedSettingsVisible = true
+        getComposeView().visibility = View.VISIBLE
+    }
+
+    fun showDockSettings() {
+        viewModel.isHomePopupVisible = false
+        viewModel.isDockSettingsVisible = true
         getComposeView().visibility = View.VISIBLE
     }
 }

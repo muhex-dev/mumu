@@ -343,7 +343,7 @@ fun ClockGridItem(
             .background(contentColor.copy(alpha = 0.05f))
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.1f),
+                color = if (isSelected) contentColor else contentColor.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(24.dp)
             )
             .clickable { onSelect() }
@@ -383,14 +383,14 @@ fun ClockGridItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (isSelected) Color(0xFF4CAF50).copy(alpha = 0.12f) else Color.Transparent)
+                    .background(if (isSelected) contentColor.copy(alpha = 0.05f) else Color.Transparent)
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     name,
-                    color = if (isSelected) Color(0xFF4CAF50) else contentColor,
-                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold,
+                    color = contentColor,
+                    fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
                     fontSize = 11.sp,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,

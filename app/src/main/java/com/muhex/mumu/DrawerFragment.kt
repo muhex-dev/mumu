@@ -11,9 +11,12 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -46,8 +49,7 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
     private var showHiddenOnly = false
 
     // UI State for Compose Overlays
-    private var isCustomizeVisible by mutableStateOf(false)
-    private var isSettingsVisible by mutableStateOf(false)
+    private var isDrawerSettingsVisible by mutableStateOf(false)
     private var isClockSettingsVisible by mutableStateOf(false)
     private var isFontSettingsVisible by mutableStateOf(false)
     private var fontPickerTargetKey by mutableStateOf("drawer_font_family")
@@ -62,12 +64,30 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        savedInstanceState?.let {
+            isDrawerSettingsVisible = it.getBoolean("isDrawerSettingsVisible", false)
+            isClockSettingsVisible = it.getBoolean("isClockSettingsVisible", false)
+            isFontSettingsVisible = it.getBoolean("isFontSettingsVisible", false)
+            fontPickerTargetKey = it.getString("fontPickerTargetKey", "drawer_font_family")
+            fontPickerTitle = it.getString("fontPickerTitle", "Drawer Font")
+        }
+
         parseArguments()
         setupUI()
         setupObservers()
         handleEntryAnimation()
         applyCurrentSettings()
         refreshAppList()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("isDrawerSettingsVisible", isDrawerSettingsVisible)
+        outState.putBoolean("isClockSettingsVisible", isClockSettingsVisible)
+        outState.putBoolean("isFontSettingsVisible", isFontSettingsVisible)
+        outState.putString("fontPickerTargetKey", fontPickerTargetKey)
+        outState.putString("fontPickerTitle", fontPickerTitle)
     }
 
     override fun onResume() {
@@ -128,90 +148,103 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
     // endregion
 
     // region Compose UI Setup
-    private fun setupSettingsCompose() {
-        binding.drawerSettingsCompose.setContent {
-            UnifiedSettingsSheet(
-                repository = repository,
+    @Composable
+    private fun DrawerComposeContent() {
+        val anyVisible = isDrawerSettingsVisible || isClockSettingsVisible || isFontSettingsVisible
+        androidx.compose.runtime.LaunchedEffect(anyVisible) {
+            binding.drawerSettingsCompose.visibility = if (anyVisible) View.VISIBLE else View.GONE
+        }
+
+        MaterialTheme(
+            colorScheme = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+                darkColorScheme(
+                    primary = Color(0xFF64B5F6), // Consistent blue accent
+                    surface = Color(0xFF0F0F0F),
+                    onSurface = Color.White
+                )
+            } else {
+                lightColorScheme(
+                    primary = Color(0xFF2196F3),
+                    surface = Color(0xFFF8F9FA),
+                    onSurface = Color.Black
+                )
+            }
+        ) {
+            // UnifiedSettingsSheet removed from here as it's no longer used in DrawerFragment
+
+            // DrawerSettingsPopup
+            DrawerSettingsPopup(
+                isVisible = isDrawerSettingsVisible,
                 prefs = prefs,
-                isVisible = isSettingsVisible,
-                initialTab = 4,
-                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "unified") },
-                onOpenClockSettings = { showClockSettings() },
-                onDismiss = { hideSettings() }
+                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "drawer_settings") },
+                onDismiss = { hideDrawerSettings() }
             )
 
-            CustomizePopup(
-                isVisible = isCustomizeVisible,
-                onDismiss = { hideCustomize() }
-            )
-
+            // ClockSettingsSheet
             ClockSettingsSheet(
                 prefs = prefs,
                 isVisible = isClockSettingsVisible,
-                onOpenFontPicker = {  key, title -> showFontPicker(key, title, from = "clock") },
+                onOpenFontPicker = { key, title -> showFontPicker(key, title, from = "clock") },
                 onDismiss = { hideClockSettings() }
             )
 
+            // FontSettings
             FontSettings(
                 prefs = prefs,
                 targetKey = fontPickerTargetKey,
                 title = fontPickerTitle,
                 isVisible = isFontSettingsVisible,
-                onDismiss = { handleFontPickerDismiss() }
+                onDismiss = { isFontSettingsVisible = false },
+                onDismissFinished = { handleFontPickerDismiss() }
             )
         }
     }
 
+    private fun setupSettingsCompose() {
+        binding.drawerSettingsCompose.apply {
+            // Ensure background is transparent so Compose Surface can handle the shape and theme colors
+            setBackgroundColor(0x00000000)
+            setContent {
+                DrawerComposeContent()
+            }
+        }
+    }
+
+
+
+
+
     private fun showDrawerSettings() {
-        isSettingsVisible = true
-        binding.drawerSettingsCompose.visibility = View.VISIBLE
+        isDrawerSettingsVisible = true
     }
 
-    private fun hideSettings() {
-        isSettingsVisible = false
-        checkOverlayVisibility()
-    }
-
-    private fun showCustomize() {
-        isCustomizeVisible = true
-        binding.drawerSettingsCompose.visibility = View.VISIBLE
-    }
-
-    private fun hideCustomize() {
-        isCustomizeVisible = false
-        checkOverlayVisibility()
+    private fun hideDrawerSettings() {
+        isDrawerSettingsVisible = false
     }
 
     private fun showClockSettings() {
-        isSettingsVisible = false
         isClockSettingsVisible = true
     }
 
     private fun hideClockSettings() {
         isClockSettingsVisible = false
-        checkOverlayVisibility()
     }
 
     private fun showFontPicker(key: String, title: String, from: String) {
+        // Clear previous states to avoid overlap
+        isClockSettingsVisible = false
+        isDrawerSettingsVisible = false
+
         fontPickerTargetKey = key
         fontPickerTitle = title
-        if (from == "unified") isSettingsVisible = false
-        else if (from == "clock") isClockSettingsVisible = false
         isFontSettingsVisible = true
     }
 
     private fun handleFontPickerDismiss() {
-        isFontSettingsVisible = false
         if (fontPickerTargetKey.contains("clock") || fontPickerTargetKey.contains("date")) {
-            isClockSettingsVisible = true
-        } else {
-            isSettingsVisible = true
-        }
-    }
-
-    private fun checkOverlayVisibility() {
-        if (!isSettingsVisible && !isClockSettingsVisible && !isFontSettingsVisible && !isCustomizeVisible) {
-            binding.drawerSettingsCompose.visibility = View.GONE
+            showClockSettings()
+        } else if (fontPickerTargetKey.contains("drawer")) {
+            showDrawerSettings()
         }
     }
     // endregion
@@ -390,7 +423,6 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
             add("Refresh")
             add(if (showHiddenOnly) "Show All Apps" else "Hidden Apps")
             add("Customize")
-            add("Drawer Settings")
         }
 
         popup.setOnMenuItemClickListener { item ->
@@ -418,9 +450,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
                     refreshAppList()
                 }
                 "Customize" -> {
-                    showCustomize()
+                    showDrawerSettings()
                 }
-                "Drawer Settings" -> showDrawerSettings()
             }
             true
         }
@@ -470,7 +501,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
 
         val drawerKeys = setOf(
             "drawer_columns", "drawer_opacity", "drawer_item_opacity",
-            "drawer_display_mode", "drawer_icon_size", "drawer_label_size", "drawer_font_family"
+            "drawer_display_mode", "drawer_icon_size", "drawer_label_size", "drawer_font_family",
+            "drawer_top_padding", "drawer_bottom_padding"
         )
         val scrollerKeys = setOf(
             "scroller_padding", "scroller_bending", "scroller_spread",
@@ -482,6 +514,8 @@ class DrawerFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLis
         when {
             key in drawerKeys -> {
                 applyCurrentSettings()
+                // notifyDataSetChanged is expensive. Optimization: Use payload or specific update if only size/opacity changed.
+                // For now, still notifyDataSetChanged but it's triggered less often (onValueChangeFinished).
                 allAppsAdapter.notifyDataSetChanged()
             }
             key in scrollerKeys -> updateScrollerSettings()

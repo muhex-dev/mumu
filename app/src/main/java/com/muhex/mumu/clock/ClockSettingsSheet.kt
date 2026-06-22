@@ -8,6 +8,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -100,6 +101,11 @@ fun ClockSettingsSheet(
                     onOpacityChange = {
                         sheetOpacity = it
                         prefs.edit().putFloat("sheet_transparency", it).apply()
+                    },
+                    onReset = {
+                        scope.launch {
+                            offset.animateTo(screenHeightPx * 0.05f, spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow))
+                        }
                     },
                     onDrag = { dragAmount ->
                         val newOffset = (offset.value + dragAmount).coerceIn(topLimitPx, screenHeightPx)
@@ -301,6 +307,7 @@ private fun HeaderHandle(
     contentColor: Color,
     sheetOpacity: Float,
     onOpacityChange: (Float) -> Unit,
+    onReset: () -> Unit,
     onDrag: (Float) -> Unit,
     onDragEnd: () -> Unit
 ) {
@@ -311,6 +318,11 @@ private fun HeaderHandle(
                 detectVerticalDragGestures(
                     onDragEnd = onDragEnd,
                     onVerticalDrag = { _, dragAmount -> onDrag(dragAmount) }
+                )
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = { onReset() }
                 )
             },
         horizontalAlignment = Alignment.CenterHorizontally

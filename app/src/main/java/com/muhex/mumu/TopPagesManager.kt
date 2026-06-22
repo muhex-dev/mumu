@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.muhex.mumu.clock.RotatingClockView
 import com.muhex.mumu.databinding.FragmentHomeBinding
+import com.muhex.mumu.widgets.WidgetSlotModel
 
 class TopPagesManager(
     private val context: Context,

@@ -1,5 +1,6 @@
 package com.muhex.mumu
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.os.UserManager
@@ -51,12 +52,8 @@ object LaunchApp {
     private fun executeLaunch(context: Context, app: AppModel) {
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
         try {
-            val activities = launcherApps.getActivityList(app.packageName, app.userHandle)
-            if (activities.isNotEmpty()) {
-                launcherApps.startMainActivity(activities[0].componentName, app.userHandle, null, null)
-            } else {
-                Toast.makeText(context, "App not found for this profile", Toast.LENGTH_SHORT).show()
-            }
+            val componentName = ComponentName(app.packageName, app.className)
+            launcherApps.startMainActivity(componentName, app.userHandle, null, null)
         } catch (e: Exception) {
             Toast.makeText(context, "Error launching ${app.label}", Toast.LENGTH_SHORT).show()
         }

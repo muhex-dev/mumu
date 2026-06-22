@@ -33,6 +33,8 @@ import com.muhex.mumu.settings.*
 import com.muhex.mumu.settings.tabs.*
 import androidx.compose.ui.platform.LocalContext
 
+import com.muhex.mumu.widgets.WidgetSlotModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnifiedSettingsSheet(
@@ -48,8 +50,10 @@ fun UnifiedSettingsSheet(
 )  {
     val isDark = isSystemInDarkTheme()
     var sheetOpacity by remember { mutableFloatStateOf(1.0f) }
-    val backgroundColor = (if (isDark) Color(0xFF121212) else Color(0xFFF8F9FA)).copy(alpha = sheetOpacity)
-    val contentColor = if (isDark) Color.White else Color(0xFF1A1C1E)
+    val backgroundColor = (if (isDark) Color.Black else Color.White).copy(alpha = sheetOpacity)
+    val contentColor = if (isDark) Color.White else Color.Black
+    val accentColor = contentColor
+    val subTextColor = contentColor.copy(alpha = 0.6f)
 
     val config = LocalConfiguration.current
     val density = LocalDensity.current
@@ -62,7 +66,6 @@ fun UnifiedSettingsSheet(
     var selectedTab by remember { mutableIntStateOf(initialTab) }
     var isClockViewEnabled by remember { mutableStateOf(prefs.getBoolean("clock_view_enabled", true)) }
     var showNowApps by remember { mutableStateOf(prefs.getBoolean("show_now_apps", true)) }
-    var showDockBar by remember { mutableStateOf(prefs.getBoolean("show_dock_bar", true)) }
     var gesturesEnabled by remember { mutableStateOf(prefs.getBoolean("gestures_enabled", true)) }
     var quotesEnabled by remember { mutableStateOf(prefs.getBoolean("quotes_enabled", true)) }
     val context = LocalContext.current
@@ -73,7 +76,6 @@ fun UnifiedSettingsSheet(
             when (key) {
                 "clock_view_enabled" -> isClockViewEnabled = p.getBoolean(key, true)
                 "show_now_apps"      -> showNowApps = p.getBoolean(key, true)
-                "show_dock_bar"      -> showDockBar = p.getBoolean(key, true)
                 "gestures_enabled"   -> gesturesEnabled = p.getBoolean(key, true)
                 "quotes_enabled"     -> quotesEnabled = p.getBoolean(key, true)
                 "top_section_mode"   -> topMode = WidgetSlotModel.loadTopMode(context)
@@ -178,9 +180,7 @@ fun UnifiedSettingsSheet(
                 tabs.add("Widgets" to Icons.Default.Widgets)
                 if (isClockViewEnabled) tabs.add("Clock" to Icons.Default.WatchLater)
                 if (showNowApps) tabs.add("Pinned" to Icons.Default.PushPin)
-                tabs.add("Drawer" to Icons.Default.GridView)
                 if (gesturesEnabled) tabs.add("Gestures" to Icons.Default.TouchApp)
-                if (showDockBar) tabs.add("Dock" to Icons.Default.ViewAgenda)
                 if (quotesEnabled) tabs.add("Quotes" to Icons.Default.FormatQuote)
 
                 ScrollableTabRow(
@@ -192,10 +192,10 @@ fun UnifiedSettingsSheet(
                             Box(
                                 Modifier
                                     .tabIndicatorOffset(tabPositions[selectedTab])
-                                    .height(3.dp)
+                                    .height(2.dp)
                                     .padding(horizontal = 12.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF4CAF50))
+                                    .background(accentColor)
                             )
                         }
                     },
@@ -204,7 +204,7 @@ fun UnifiedSettingsSheet(
                 ) {
                     tabs.forEachIndexed { index, (title, icon) ->
                         val selected = selectedTab == index
-                        val color = if (selected) Color(0xFF4CAF50) else contentColor.copy(alpha = 0.4f)
+                        val color = if (selected) accentColor else subTextColor
 
                         Tab(
                             selected = selected,
@@ -221,12 +221,13 @@ fun UnifiedSettingsSheet(
                                         tint = color,
                                         modifier = Modifier.size(18.dp)
                                     )
-                                    Spacer(Modifier.width(6.dp))
+                                    Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.labelLarge.copy(
                                             color = color,
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                                            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
+                                            letterSpacing = if (selected) 0.5.sp else 0.sp
                                         )
                                     )
                                 }
@@ -254,9 +255,7 @@ fun UnifiedSettingsSheet(
                         )
                         "Clock"    -> ClockTab(prefs, contentColor, onOpenClockSettings)
                         "Pinned"   -> PinnedAppsTab(repository, prefs, contentColor, backgroundColor, onOpenFontPicker)
-                        "Drawer"   -> DrawerTab(prefs, contentColor, onOpenFontPicker)
                         "Gestures" -> GesturesTab(repository, prefs, contentColor)
-                        "Dock"     -> DockTab(repository, prefs, contentColor, backgroundColor, onOpenFontPicker)
                         "Quotes"   -> QuotesTab(prefs, contentColor)
                     }
                 }
@@ -264,5 +263,6 @@ fun UnifiedSettingsSheet(
         }
     }
 }
+
 
 // All UI components and tabs have been moved to UnifiedSettingsLayout.kt

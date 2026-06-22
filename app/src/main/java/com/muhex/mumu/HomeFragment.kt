@@ -17,6 +17,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.muhex.mumu.clock.ClockSettingsSheet
 import com.muhex.mumu.databinding.FragmentHomeBinding
+import com.muhex.mumu.widgets.WidgetHostManager
+import com.muhex.mumu.widgets.WidgetPickerActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -109,6 +111,8 @@ class HomeFragment : Fragment() {
             prefListener = prefListener,
             onBatteryChanged = { batteryPct ->
                 UIHelper.updateBatteryUI(topPagesManager.getAllPages(), batteryPct)
+                // Also update the standalone widget
+                com.muhex.mumu.widgets.MumuGlanceWidget.forceUpdateAll(requireContext())
             },
             onWidgetAdded = { widgetId, explicitIndex ->
                 topSectionController.handleWidgetAddition(widgetId, explicitIndex)
@@ -130,7 +134,8 @@ class HomeFragment : Fragment() {
             onOpenWallpaper = {
                 val intent = Intent(Intent.ACTION_SET_WALLPAPER)
                 startActivity(Intent.createChooser(intent, "Select Wallpaper"))
-            }
+            },
+            onAddWidget = { launchWidgetPicker() }
         )
     }
 
@@ -236,6 +241,14 @@ class HomeFragment : Fragment() {
                     onOpenFontPicker = { key, title -> homeOverlayController.showFontPicker(key, title, source = "unified") },
                     onOpenClockSettings = { homeOverlayController.showClockSettings() },
                     onAddWidget = { launchWidgetPicker() },
+                    onDismiss = { homeOverlayController.dismissComposeOverlays() }
+                )
+
+                DockSettingsPopup(
+                    isVisible = viewModel.isDockSettingsVisible,
+                    repository = repository,
+                    prefs = prefs,
+                    onOpenFontPicker = { key, title -> homeOverlayController.showFontPicker(key, title, source = "dock") },
                     onDismiss = { homeOverlayController.dismissComposeOverlays() }
                 )
 

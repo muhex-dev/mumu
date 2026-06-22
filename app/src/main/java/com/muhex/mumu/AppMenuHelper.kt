@@ -16,6 +16,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import coil.load
 
 /**
  * Helper object to build and display the context menu for applications.
@@ -58,7 +59,7 @@ object AppMenuHelper {
         val uniqueId = "${app.packageName}:$serial"
 
         // App basic info
-        view.findViewById<ImageView>(R.id.menu_icon).setImageDrawable(app.icon)
+        view.findViewById<ImageView>(R.id.menu_icon).load(app)
         view.findViewById<TextView>(R.id.menu_header).text = app.label
 
         // Pagination Logic

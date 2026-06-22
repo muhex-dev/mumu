@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#01000000"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingHorizontal="14dp">
+
+    <!-- Time, Date, Battery Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="hh:mm a"
+            android:format24Hour="HH:mm"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:letterSpacing="0.1" />
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="dd MMMM"
+            android:format24Hour="dd MMMM"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:letterSpacing="0.1" />
+
+        <TextView
+            android:id="@+id/widget_battery_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:alpha="0.6"
+            android:fontFamily="sans-serif-medium"
+            android:text="BATTERY --%"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:letterSpacing="0.1" />
+    </LinearLayout>
+
+    <!-- Bold Greeting Section -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="18dp"
+        android:paddingVertical="8dp"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false"
+            android:text="HAVE"
+            android:textColor="@android:color/white"
+            android:textSize="44sp"
+            android:letterSpacing="-0.08" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-8dp"
+            android:background="@android:color/white"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false"
+            android:paddingStart="6dp"
+            android:paddingEnd="10dp"
+            android:text="A NICE"
+            android:textColor="@android:color/black"
+            android:textSize="44sp"
+            android:letterSpacing="-0.04" />
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-8dp"
+            android:fontFamily="sans-serif-black"
+            android:format12Hour="EEEE"
+            android:format24Hour="EEEE"
+            android:includeFontPadding="false"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="44sp"
+            android:letterSpacing="-0.04" />
+    </LinearLayout>
+
+    <!-- Footer Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="140dp"
+            android:layout_height="4dp"
+            android:background="@android:color/white" />
+
+        <TextView
+            android:id="@+id/widget_footer_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:alpha="0.7"
+            android:fontFamily="sans-serif-medium"
+            android:text="LOADING WEATHER..."
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:letterSpacing="0.1" />
+    </LinearLayout>
+
+</LinearLayout>

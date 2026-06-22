@@ -1,4 +1,4 @@
-package com.muhex.mumu
+package com.muhex.mumu.widgets
 
 /**
  * Central registry of all available top-section widgets.
